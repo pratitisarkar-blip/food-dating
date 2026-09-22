@@ -1,0 +1,368 @@
+import type { FoodQuestion } from "./types";
+
+export const QUESTIONS: FoodQuestion[] = [
+  {
+    id: "samosa-1",
+    foodSlug: "samosa",
+    prompt: "Samosa arrives at your date 15 minutes late. Your reaction?",
+    dimension: "CHUTNEY COMPATIBILITY",
+    options: [
+      { key: "A", label: "It's okay ❤️", weight: 86 },
+      { key: "B", label: "Where were you?", weight: 48 },
+      { key: "C", label: "I have already eaten.", weight: 18 },
+      { key: "D", label: "Actually, I respect the confidence.", weight: 72 }
+    ]
+  },
+  {
+    id: "samosa-2",
+    foodSlug: "samosa",
+    prompt: "Chutney situation?",
+    dimension: "PERSONALITY",
+    options: [
+      { key: "A", label: "Green only", weight: 62 },
+      { key: "B", label: "Sweet only", weight: 58 },
+      { key: "C", label: "Both. Obviously.", weight: 96 },
+      { key: "D", label: "No chutney. I believe in pure relationships.", weight: 22 }
+    ]
+  },
+  {
+    id: "samosa-3",
+    foodSlug: "samosa",
+    prompt: "One samosa is left. What happens?",
+    dimension: "SHARING INDEX",
+    options: [
+      { key: "A", label: "We share.", weight: 88 },
+      { key: "B", label: "I give it to them.", weight: 80 },
+      { key: "C", label: "Whoever gets there first wins.", weight: 34 },
+      { key: "D", label: "I quietly order another plate.", weight: 74 }
+    ]
+  },
+  {
+    id: "samosa-4",
+    foodSlug: "samosa",
+    prompt: "Samosa says: “I'm a little oily.”",
+    dimension: "CRUNCH COMPATIBILITY",
+    options: [
+      { key: "A", label: "Nobody's perfect.", weight: 84 },
+      { key: "B", label: "Dealbreaker.", weight: 12 },
+      { key: "C", label: "Depends how good you are.", weight: 70 },
+      { key: "D", label: "That's between you and your cardiologist.", weight: 44 }
+    ]
+  },
+  {
+    id: "samosa-5",
+    foodSlug: "samosa",
+    prompt: "Ideal Samosa date?",
+    dimension: "DATE ENERGY",
+    options: [
+      { key: "A", label: "Chai + gossip", weight: 92 },
+      { key: "B", label: "House party", weight: 68 },
+      { key: "C", label: "Rainy evening", weight: 78 },
+      { key: "D", label: "Wedding buffet", weight: 84 }
+    ]
+  },
+  {
+    id: "brownie-1",
+    foodSlug: "brownie",
+    prompt: "Brownie says “I'm just a little sweet.” Your response?",
+    dimension: "SWEETNESS",
+    options: [
+      { key: "A", label: "Perfect.", weight: 90 },
+      { key: "B", label: "Too much.", weight: 28 },
+      { key: "C", label: "That's what you say now.", weight: 56 },
+      { key: "D", label: "Prove it.", weight: 72 }
+    ]
+  },
+  {
+    id: "brownie-2",
+    foodSlug: "brownie",
+    prompt: "Would you share your last brownie?",
+    dimension: "TRUST",
+    options: [
+      { key: "A", label: "Absolutely.", weight: 88 },
+      { key: "B", label: "Never.", weight: 16 },
+      { key: "C", label: "Only with my soulmate.", weight: 76 },
+      { key: "D", label: "I'd order another one.", weight: 70 }
+    ]
+  },
+  {
+    id: "brownie-3",
+    foodSlug: "brownie",
+    prompt: "Brownie asks: Cake or Brownie?",
+    dimension: "LOYALTY",
+    options: [
+      { key: "A", label: "Brownie.", weight: 96 },
+      { key: "B", label: "Cake.", weight: 22 },
+      { key: "C", label: "Depends on the mood.", weight: 60 },
+      { key: "D", label: "Why are you creating conflict?", weight: 48 }
+    ]
+  },
+  {
+    id: "brownie-4",
+    foodSlug: "brownie",
+    prompt: "Your brownie is slightly warm.",
+    dimension: "WARMTH",
+    options: [
+      { key: "A", label: "Green flag.", weight: 86 },
+      { key: "B", label: "Perfection.", weight: 94 },
+      { key: "C", label: "Too hot to handle.", weight: 64 },
+      { key: "D", label: "I'm calling HR.", weight: 30 }
+    ]
+  },
+  {
+    id: "brownie-5",
+    foodSlug: "brownie",
+    prompt: "Brownie wants a midnight date.",
+    dimension: "MIDNIGHT ENERGY",
+    options: [
+      { key: "A", label: "Obviously.", weight: 92 },
+      { key: "B", label: "Sleep is important.", weight: 36 },
+      { key: "C", label: "Only weekends.", weight: 58 },
+      { key: "D", label: "Send location.", weight: 84 }
+    ]
+  },
+  {
+    id: "protein-bar-1",
+    foodSlug: "protein-bar",
+    prompt: "Protein Bar asks your daily protein intake.",
+    dimension: "MACRO CHEMISTRY",
+    options: [
+      { key: "A", label: "Proudly tell them.", weight: 94 },
+      { key: "B", label: "That's personal.", weight: 42 },
+      { key: "C", label: "I have no idea.", weight: 50 },
+      { key: "D", label: "I came here for love, not an audit.", weight: 28 }
+    ]
+  },
+  {
+    id: "protein-bar-2",
+    foodSlug: "protein-bar",
+    prompt: "First date activity?",
+    dimension: "LIFESTYLE",
+    options: [
+      { key: "A", label: "Gym.", weight: 90 },
+      { key: "B", label: "Walk.", weight: 74 },
+      { key: "C", label: "Dinner.", weight: 48 },
+      { key: "D", label: "Cheat meal.", weight: 32 }
+    ]
+  },
+  {
+    id: "protein-bar-3",
+    foodSlug: "protein-bar",
+    prompt: "Protein Bar says: “Sugar is bad.”",
+    dimension: "VALUES",
+    options: [
+      { key: "A", label: "I agree.", weight: 92 },
+      { key: "B", label: "We need to talk.", weight: 46 },
+      { key: "C", label: "That's a red flag.", weight: 18 },
+      { key: "D", label: "I'm eating Gulab Jamun in front of you.", weight: 24 }
+    ]
+  },
+  {
+    id: "protein-bar-4",
+    foodSlug: "protein-bar",
+    prompt: "Would you date someone who counts macros?",
+    dimension: "COMMITMENT",
+    options: [
+      { key: "A", label: "Yes.", weight: 88 },
+      { key: "B", label: "Maybe.", weight: 62 },
+      { key: "C", label: "No.", weight: 20 },
+      { key: "D", label: "I don't even know what macros are.", weight: 40 }
+    ]
+  },
+  {
+    id: "protein-bar-5",
+    foodSlug: "protein-bar",
+    prompt: "Protein Bar's biggest green flag?",
+    dimension: "PRACTICAL LOVE",
+    options: [
+      { key: "A", label: "Discipline.", weight: 86 },
+      { key: "B", label: "Convenience.", weight: 70 },
+      { key: "C", label: "Healthy lifestyle.", weight: 82 },
+      { key: "D", label: "It survives in my office drawer.", weight: 64 }
+    ]
+  },
+  {
+    id: "nacho-cheese-1",
+    foodSlug: "nacho-cheese",
+    prompt: "Your date takes your last nacho.",
+    dimension: "BOUNDARY DIP",
+    options: [
+      { key: "A", label: "Forgivable.", weight: 78 },
+      { key: "B", label: "Never.", weight: 22 },
+      { key: "C", label: "We discuss boundaries.", weight: 60 },
+      { key: "D", label: "I take their cheese.", weight: 84 }
+    ]
+  },
+  {
+    id: "nacho-cheese-2",
+    foodSlug: "nacho-cheese",
+    prompt: "How much cheese is too much?",
+    dimension: "CHEESE LOYALTY",
+    options: [
+      { key: "A", label: "There is no such thing.", weight: 96 },
+      { key: "B", label: "Enough to be concerned.", weight: 34 },
+      { key: "C", label: "Depends.", weight: 58 },
+      { key: "D", label: "Is this a trick question?", weight: 80 }
+    ]
+  },
+  {
+    id: "nacho-cheese-3",
+    foodSlug: "nacho-cheese",
+    prompt: "Your date is extremely clingy.",
+    dimension: "CLING FACTOR",
+    options: [
+      { key: "A", label: "Cute.", weight: 82 },
+      { key: "B", label: "Red flag.", weight: 18 },
+      { key: "C", label: "Depends on the cheese.", weight: 70 },
+      { key: "D", label: "That's literally why I'm here.", weight: 94 }
+    ]
+  },
+  {
+    id: "nacho-cheese-4",
+    foodSlug: "nacho-cheese",
+    prompt: "Ideal date?",
+    dimension: "PARTY CHEMISTRY",
+    options: [
+      { key: "A", label: "Movie + nachos", weight: 86 },
+      { key: "B", label: "Party", weight: 78 },
+      { key: "C", label: "Netflix at home", weight: 72 },
+      { key: "D", label: "Anything with extra dip", weight: 92 }
+    ]
+  },
+  {
+    id: "nacho-cheese-5",
+    foodSlug: "nacho-cheese",
+    prompt: "Someone asks for your cheese dip.",
+    dimension: "SHARING",
+    options: [
+      { key: "A", label: "Share.", weight: 74 },
+      { key: "B", label: "Absolutely not.", weight: 40 },
+      { key: "C", label: "One dip only.", weight: 68 },
+      { key: "D", label: "Order another.", weight: 88 }
+    ]
+  },
+  {
+    id: "gulab-jamun-1",
+    foodSlug: "gulab-jamun",
+    prompt: "Your date says they don't like Gulab Jamun.",
+    dimension: "FAMILY VALUES",
+    options: [
+      { key: "A", label: "We can work through this.", weight: 58 },
+      { key: "B", label: "Immediate breakup.", weight: 96 },
+      { key: "C", label: "I need time.", weight: 44 },
+      { key: "D", label: "Who hurt you?", weight: 80 }
+    ]
+  },
+  {
+    id: "gulab-jamun-2",
+    foodSlug: "gulab-jamun",
+    prompt: "Hot or cold?",
+    dimension: "TEMPERATURE",
+    options: [
+      { key: "A", label: "Hot.", weight: 86 },
+      { key: "B", label: "Cold.", weight: 62 },
+      { key: "C", label: "Both.", weight: 90 },
+      { key: "D", label: "Straight from the wedding buffet.", weight: 94 }
+    ]
+  },
+  {
+    id: "gulab-jamun-3",
+    foodSlug: "gulab-jamun",
+    prompt: "How many Gulab Jamuns on a first date?",
+    dimension: "APPETITE FOR LOVE",
+    options: [
+      { key: "A", label: "One.", weight: 48 },
+      { key: "B", label: "Two.", weight: 72 },
+      { key: "C", label: "Unlimited.", weight: 92 },
+      { key: "D", label: "Depends who is paying.", weight: 64 }
+    ]
+  },
+  {
+    id: "gulab-jamun-4",
+    foodSlug: "gulab-jamun",
+    prompt: "Your Gulab Jamun comes with ice cream.",
+    dimension: "CELEBRATION",
+    options: [
+      { key: "A", label: "Soulmate.", weight: 96 },
+      { key: "B", label: "Too much.", weight: 24 },
+      { key: "C", label: "Obviously.", weight: 84 },
+      { key: "D", label: "Now we're serious.", weight: 88 }
+    ]
+  },
+  {
+    id: "gulab-jamun-5",
+    foodSlug: "gulab-jamun",
+    prompt: "Family introduction after how many dates?",
+    dimension: "MUMMY APPROVAL",
+    options: [
+      { key: "A", label: "First.", weight: 80 },
+      { key: "B", label: "Third.", weight: 74 },
+      { key: "C", label: "Six months.", weight: 42 },
+      { key: "D", label: "Mummy already knows.", weight: 94 }
+    ]
+  },
+  {
+    id: "tiramisu-1",
+    foodSlug: "tiramisu",
+    prompt: "Tiramisu says: “I have layers.”",
+    dimension: "DEPTH",
+    options: [
+      { key: "A", label: "Same.", weight: 90 },
+      { key: "B", label: "Red flag.", weight: 20 },
+      { key: "C", label: "Tell me everything.", weight: 82 },
+      { key: "D", label: "That's unnecessarily dramatic.", weight: 36 }
+    ]
+  },
+  {
+    id: "tiramisu-2",
+    foodSlug: "tiramisu",
+    prompt: "Ideal first date?",
+    dimension: "TASTE",
+    options: [
+      { key: "A", label: "Coffee.", weight: 84 },
+      { key: "B", label: "Fine dining.", weight: 88 },
+      { key: "C", label: "Art gallery.", weight: 80 },
+      { key: "D", label: "Chai tapri. Keep it real.", weight: 46 }
+    ]
+  },
+  {
+    id: "tiramisu-3",
+    foodSlug: "tiramisu",
+    prompt: "Would you split dessert?",
+    dimension: "GENEROSITY",
+    options: [
+      { key: "A", label: "Always.", weight: 78 },
+      { key: "B", label: "Never.", weight: 30 },
+      { key: "C", label: "Only Tiramisu.", weight: 92 },
+      { key: "D", label: "Depends on the person.", weight: 60 }
+    ]
+  },
+  {
+    id: "tiramisu-4",
+    foodSlug: "tiramisu",
+    prompt: "Tiramisu judges your pronunciation.",
+    dimension: "PRONUNCIATION",
+    options: [
+      { key: "A", label: "Fair.", weight: 86 },
+      { key: "B", label: "Rude.", weight: 28 },
+      { key: "C", label: "Humbling.", weight: 70 },
+      { key: "D", label: "I'll call it whatever I want.", weight: 34 }
+    ]
+  },
+  {
+    id: "tiramisu-5",
+    foodSlug: "tiramisu",
+    prompt: "Tiramisu is slightly expensive.",
+    dimension: "INVESTMENT",
+    options: [
+      { key: "A", label: "Worth it.", weight: 90 },
+      { key: "B", label: "Dealbreaker.", weight: 16 },
+      { key: "C", label: "Once in a while.", weight: 64 },
+      { key: "D", label: "Put it on the corporate card.", weight: 76 }
+    ]
+  }
+];
+
+export function questionsForFood(slug: string) {
+  return QUESTIONS.filter((q) => q.foodSlug === slug);
+}
