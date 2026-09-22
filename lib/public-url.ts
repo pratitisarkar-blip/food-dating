@@ -15,7 +15,7 @@ export function lanOrigins(port: number) {
   const ips: string[] = [];
   for (const addrs of Object.values(networkInterfaces())) {
     for (const addr of addrs ?? []) {
-      const family = addr.family === "IPv4" || addr.family === 4;
+      const family = addr.family === "IPv4" || String(addr.family) === "4";
       if (family && !addr.internal) ips.push(addr.address);
     }
   }

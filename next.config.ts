@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 
 const lanHosts = Object.values(networkInterfaces())
   .flat()
-  .filter((addr) => addr && (addr.family === "IPv4" || addr.family === 4) && !addr.internal)
+  .filter((addr) => addr && (addr.family === "IPv4" || String(addr.family) === "4") && !addr.internal)
   .map((addr) => addr!.address);
 
 const nextConfig: NextConfig = {
