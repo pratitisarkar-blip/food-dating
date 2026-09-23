@@ -420,7 +420,7 @@ function Reveal({
 
   const showVerdict = resultPhase && locked;
   const dimIndex = Math.min(step - 1, 2);
-  const dimValue = first ? [62, 47, 53][dimIndex] : dims[dimIndex]?.value;
+  const dimValue = dims[dimIndex]?.value;
 
   if (step < 1) {
     return (
