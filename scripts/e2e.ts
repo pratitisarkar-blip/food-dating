@@ -87,7 +87,7 @@ async function main() {
 
   const calcP = waitFor(controller, "controller", (d) => {
     const r = d.event.rounds.find((x: any) => x.id === d.event.currentRoundId);
-    return r?.compatibilityScore === 37;
+    return r?.compatibilityScore === 54;
   });
   controller.emit("controller-action", { type: "calculate" });
   const calc = await calcP;

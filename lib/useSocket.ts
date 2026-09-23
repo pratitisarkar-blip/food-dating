@@ -7,7 +7,9 @@ let socket: Socket | null = null;
 export function getSocket() {
   if (!socket) {
     socket = io({
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
+      upgrade: true,
+      timeout: 12000,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 400,

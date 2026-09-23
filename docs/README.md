@@ -1,6 +1,6 @@
 # Print QRs days ahead
 
-The live show should run on Railway or Render (`PUBLIC_URL`), not on a laptop tunnel. GitHub Pages is only for **printed QRs that never change**.
+Print codes from `docs/print.html` or `/print/FOOD-DATING-001` on the live Railway site. Those QRs already point at the public Railway URL.
 
 If you still use a laptop tunnel, the live URL (`*.trycloudflare.com`) changes every time you start it. Do **not** print that.
 

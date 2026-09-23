@@ -57,7 +57,9 @@ export function createEvent(id: string): EventState {
     entertainment: null,
     entertainmentLog: [],
     firstVolunteerRejected: false,
-    lastActivityAt: Date.now()
+    lastActivityAt: Date.now(),
+    cast: {},
+    castRevealed: false
   };
 }
 
@@ -134,6 +136,9 @@ export function audienceView(event: EventState, participantId: string | null): A
   const isVolunteer = Boolean(
     participant && round && round.participantId === participant.id && round.status !== "complete"
   );
+  const matchedFoodId = participant
+    ? Object.entries(event.cast || {}).find(([, pid]) => pid === participant.id)?.[0] ?? null
+    : null;
   return {
     eventId: event.id,
     status: event.status,
@@ -145,10 +150,12 @@ export function audienceView(event: EventState, participantId: string | null): A
     waitingLines: waitingLines(event),
     volunteerChosen: Boolean(round && round.status !== "complete"),
     isVolunteer,
-    round: isVolunteer ? publicRound(event) : null,
+    round: publicRound(event),
     questions: round?.foodId ? questionsForFood(round.foodId) : [],
     usedFoodIds: event.usedFoodIds,
-    reconnecting: false
+    reconnecting: false,
+    castRevealed: Boolean(event.castRevealed),
+    matchedFood: matchedFoodId ? FOOD_BY_ID[matchedFoodId] ?? null : null
   };
 }
 
@@ -166,15 +173,28 @@ export function stageView(event: EventState): StageView {
     round: publicRound(event),
     foods: FOODS,
     questions: round?.foodId ? questionsForFood(round.foodId) : [],
-    usedFoodIds: event.usedFoodIds
+    usedFoodIds: event.usedFoodIds,
+    castPairs: PRIMARY_FOODS.map((f) => {
+      const pid = event.cast?.[f.id];
+      const person = pid ? event.participants.find((p) => p.id === pid) : null;
+      return {
+        foodId: f.id,
+        foodName: f.name,
+        image: f.image,
+        volunteerName: person?.fullName ?? "",
+        done: event.usedFoodIds.includes(f.id)
+      };
+    })
   };
 }
 
 function waitingLines(event: EventState) {
   const agg = computeAggregates(event);
   return [
-    "Now we wait and see who chose YOU.",
+    "Look up. The casting director is still swiping.",
+    "You are on the bench. The food is interviewing someone else.",
     "Please don't refresh. Your love life is loading.",
+    "Not picked yet. Try looking more dateable from the audience.",
     `${agg.leftByFood.broccoli ?? 0} people have already rejected Broccoli.`,
     `${agg.rightByFood.pizza ?? 0} people said yes to Pizza. Predictable.`,
     `Gulab Jamun has received ${agg.rightByFood["gulab-jamun"] ?? 0} suspiciously high interest.`,
@@ -182,7 +202,8 @@ function waitingLines(event: EventState) {
     "Tiramisu is pretending not to care.",
     "Broccoli is currently having an existential crisis.",
     `Someone just rejected Pizza. ${agg.leftByFood.pizza ?? 0} times, actually.`,
-    `${agg.completed} people are done choosing. The food is still deciding.`
+    `${agg.completed} people are done choosing. The food is still deciding.`,
+    "If they call your name, act surprised. If they don't, act busy."
   ];
 }
 
@@ -191,44 +212,55 @@ export function generateEntertainment(event: EventState): EntertainmentCard {
   const looking = Math.max(0, agg.totalParticipants - agg.completed);
   const cards = [
     {
-      headline: `${looking} PEOPLE ARE CURRENTLY LOOKING FOR LOVE.`,
-      body: "Phones up. Standards... negotiable."
+      headline: `${looking} PHONES ARE STILL SWIPING.`,
+      body: "Don't look down too long. The food is looking back."
     },
     {
-      headline: `${agg.leftByFood.broccoli ?? 0} PEOPLE HAVE ALREADY REJECTED BROCCOLI.`,
-      body: "Broccoli will recover. Eventually."
+      headline: `${agg.leftByFood.broccoli ?? 0} PEOPLE HAVE ALREADY GHOSTED BROCCOLI.`,
+      body: "Broccoli is in the hallway, rewriting its bio."
     },
     {
-      headline: `${agg.rightByFood.samosa ?? 0} PEOPLE HAVE FOUND SAMOSA ATTRACTIVE.`,
-      body: "The chutney lobby is thriving."
+      headline: `SAMOSA HAS ${agg.rightByFood.samosa ?? 0} YESSES.`,
+      body: "The chutney lobby is thriving. Extra drama included."
     },
     {
-      headline: `${agg.rightByFood.brownie ?? 0} PEOPLE SAID YES TO BROWNIE.`,
-      body: "Sweetness is polling well."
+      headline: `BROWNIE IS POLLING DANGEROUSLY WELL.`,
+      body: `${agg.rightByFood.brownie ?? 0} people said yes. Midnight fridge energy.`
     },
     {
-      headline: `${agg.rightByFood["protein-bar"] ?? 0} PEOPLE SAID YES TO PROTEIN BAR.`,
-      body: "Their friends are concerned."
+      headline: `PROTEIN BAR WOULD LIKE A WORD.`,
+      body: `${agg.leftByFood["protein-bar"] ?? 0} left swipes. The macros are taking it personally.`
     },
     {
-      headline: `${agg.rightByFood["gulab-jamun"] ?? 0} PEOPLE SAID YES TO GULAB JAMUN.`,
-      body: "We may have found a national treasure."
+      headline: `GULAB JAMUN HAS ${agg.rightByFood["gulab-jamun"] ?? 0} ADMIRERS.`,
+      body: "Mummy already likes this one. Obviously."
     },
     {
-      headline: "🚨 FOOD DATING UPDATE 🚨",
-      body:
-        agg.totalLeft > agg.totalRight
-          ? "Someone has been rejecting aggressively. Standards: HIGH."
-          : "The room is saying yes. A little too fast."
+      headline: "TIRAMISU IS PLAYING HARD TO GET.",
+      body: "Layers. Secrets. A little too much coffee."
     },
-    { headline: "BREAKING:", body: "Pizza has entered the chat." },
     {
       headline: `${agg.rightByFood["nacho-cheese"] ?? 0} PEOPLE WANT THE CHEESE.`,
-      body: "Personal space is cancelled."
+      body: "Personal space has been cancelled."
     },
     {
-      headline: "PROTEIN BAR IS LOSING THE ROOM.",
-      body: `${agg.leftByFood["protein-bar"] ?? 0} left swipes. The gym is shaking.`
+      headline: "THE FOOD IS SWIPING BACK.",
+      body: "Someone in this room is about to get chosen."
+    },
+    {
+      headline: "BREAKING: STANDARDS ARE FLEXIBLE.",
+      body:
+        agg.totalLeft > agg.totalRight
+          ? "The room is rejecting with confidence. Iconic."
+          : "The room is saying yes. A little too fast."
+    },
+    {
+      headline: `${agg.completed} PEOPLE ARE DONE CHOOSING.`,
+      body: "The menu is still deciding who deserves a date."
+    },
+    {
+      headline: "LOOK UP WHEN YOUR NAME DROPS.",
+      body: "Until then, swipe like you mean it."
     }
   ];
   const pick = cards[Math.floor(Math.random() * cards.length)];
@@ -318,14 +350,79 @@ export function setPhase(event: EventState, phase: StagePhase) {
   touch(event);
 }
 
-export function selectVolunteer(event: EventState, participantId: string) {
+function ensureCast(event: EventState) {
+  if (!event.cast) event.cast = {};
+  return event.cast;
+}
+
+export function assignCast(event: EventState, participantId: string, foodId: string) {
+  const food = FOOD_BY_ID[foodId];
+  if (!food?.isPrimary) throw new Error("Pick one of the six date foods.");
   const person = event.participants.find((p) => p.id === participantId);
   if (!person) throw new Error("Participant not found.");
+  const liked = event.swipes.some(
+    (s) => s.participantId === participantId && s.foodId === foodId && s.direction === "right"
+  );
+  if (!liked) throw new Error("They did not swipe right on that food.");
+  if (event.usedFoodIds.includes(foodId)) {
+    throw new Error("That food already had its date.");
+  }
+  const cast = ensureCast(event);
+  if (cast[foodId] === participantId) {
+    delete cast[foodId];
+    touch(event);
+    return;
+  }
+  for (const [fid, pid] of Object.entries(cast)) {
+    if (pid === participantId) delete cast[fid];
+  }
+  cast[foodId] = participantId;
+  touch(event);
+}
+
+export function revealMatches(event: EventState) {
+  const cast = ensureCast(event);
+  const missing = PRIMARY_FOODS.filter((f) => !cast[f.id]);
+  if (missing.length) {
+    throw new Error(`Book all six dates first. Still need ${missing.map((f) => f.name).join(", ")}.`);
+  }
+  const live = currentRound(event);
+  if (live && live.status !== "complete") {
+    throw new Error("Finish the person on stage first.");
+  }
+  event.castRevealed = true;
+  event.phase = "CAST_REVEAL";
+  touch(event);
+}
+
+function chooseFoodForVolunteer(event: EventState, participantId: string, foodSlug?: string) {
+  if (foodSlug) {
+    const named = FOOD_BY_ID[foodSlug] ?? FOODS.find((f) => f.slug === foodSlug);
+    if (named?.isPrimary && !event.usedFoodIds.includes(named.id)) return named.id;
+  }
+  const assigned = Object.entries(ensureCast(event)).find(([, pid]) => pid === participantId)?.[0];
+  if (assigned && !event.usedFoodIds.includes(assigned)) return assigned;
+  const liked = new Set(
+    event.swipes
+      .filter((s) => s.participantId === participantId && s.direction === "right")
+      .map((s) => s.foodId)
+  );
+  const unused = PRIMARY_FOODS.filter((f) => !event.usedFoodIds.includes(f.id));
+  return unused.find((f) => liked.has(f.id))?.id ?? unused[0]?.id ?? null;
+}
+
+export function selectVolunteer(event: EventState, participantId: string, foodSlug?: string) {
+  const person = event.participants.find((p) => p.id === participantId);
+  if (!person) throw new Error("Participant not found.");
+  if (currentRound(event) && currentRound(event)!.status !== "complete") {
+    throw new Error("End the current round first.");
+  }
+  const foodId = chooseFoodForVolunteer(event, participantId, foodSlug);
   const round: StageRound = {
     id: randomUUID(),
     eventId: event.id,
     participantId,
-    foodId: null,
+    foodId,
     roundNumber: event.rounds.filter((r) => r.status === "complete").length + 1,
     status: "announcing",
     currentQuestion: 0,
@@ -357,10 +454,21 @@ export function attachFood(event: EventState, foodSlug: string) {
     throw new Error("This volunteer already chose a food.");
   }
   round.foodId = food.id;
-  round.status = "questions";
-  round.currentQuestion = 0;
-  round.revealedAnswer = false;
-  event.phase = "QUESTION";
+  const alreadyAsking =
+    round.status === "questions" ||
+    event.phase === "QUESTION" ||
+    event.phase === "ANSWER_REVEAL";
+  if (!alreadyAsking) {
+    round.status = "questions";
+    round.currentQuestion = 0;
+    round.revealedAnswer = false;
+    event.phase = "QUESTION";
+  } else {
+    round.status = "questions";
+    if (event.phase === "VOLUNTEER_ANNOUNCEMENT" || event.phase === "FOOD_SELECTION") {
+      event.phase = "QUESTION";
+    }
+  }
   touch(event);
   return round;
 }
@@ -426,6 +534,23 @@ export function prevQuestion(event: EventState) {
   touch(event);
 }
 
+function showScoreFor(kind: ResultKind, volunteerIndex: number) {
+  if (kind === "match") {
+    if (volunteerIndex < 2) return 91;
+    const extras = [94, 87, 96, 89, 93, 85, 98, 82];
+    return extras[(volunteerIndex - 2) % extras.length];
+  }
+  if (kind === "not-a-match") {
+    if (volunteerIndex < 2) return 54;
+    const extras = [47, 61, 38, 58, 49, 42, 35, 56];
+    return extras[(volunteerIndex - 2) % extras.length];
+  }
+  if (kind === "strong") return volunteerIndex < 2 ? 82 : [84, 79, 86, 76][(volunteerIndex - 2) % 4];
+  if (kind === "complicated") return volunteerIndex < 2 ? 52 : [48, 55, 44, 57][(volunteerIndex - 2) % 4];
+  if (kind === "could-be") return volunteerIndex < 2 ? 68 : [64, 71, 66, 73][(volunteerIndex - 2) % 4];
+  return 50;
+}
+
 export function calculateCompatibility(event: EventState) {
   const round = currentRound(event);
   if (!round?.foodId) throw new Error("No food selected.");
@@ -433,16 +558,15 @@ export function calculateCompatibility(event: EventState) {
   let score = scoreAnswers(round.foodId, round.answers);
   let kind = bandForScore(score).kind;
   if (isFirst) {
-    score = 37;
+    score = showScoreFor("not-a-match", round.volunteerIndex);
     kind = "not-a-match";
+  } else if (round.volunteerIndex === 1) {
+    score = showScoreFor("match", round.volunteerIndex);
+    kind = "match";
   }
   if (round.overrideResult) {
     kind = round.overrideResult;
-    if (kind === "not-a-match") score = 37;
-    if (kind === "match") score = 94;
-    if (kind === "strong") score = 82;
-    if (kind === "complicated") score = 52;
-    if (kind === "could-be") score = 68;
+    score = showScoreFor(kind, round.volunteerIndex);
   }
   round.compatibilityScore = score;
   round.result = kind;
@@ -474,8 +598,12 @@ export function endRound(event: EventState) {
   }
   event.firstVolunteerRejected = true;
   event.currentRoundId = null;
-  event.phase = "SWIPING_LIVE";
-  if (event.participants.length >= 5) showEntertainment(event);
+  if (event.castRevealed) {
+    event.phase = "CAST_REVEAL";
+  } else {
+    event.phase = "SWIPING_LIVE";
+    if (event.participants.length >= 5) showEntertainment(event);
+  }
   touch(event);
 }
 
@@ -496,6 +624,11 @@ export function skipRound(event: EventState) {
       round.status = "complete";
       event.currentRoundId = null;
     }
+  }
+  if (event.castRevealed) {
+    event.phase = "CAST_REVEAL";
+    touch(event);
+    return;
   }
   maybeAdvanceGathering(event);
   touch(event);

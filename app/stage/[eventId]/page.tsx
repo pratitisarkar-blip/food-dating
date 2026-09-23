@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import QRCode from "qrcode";
 import { getSocket } from "@/lib/useSocket";
-import type { StageView } from "@/lib/types";
+import type { FoodProfile, StageView } from "@/lib/types";
 import { bandForScore, dimensionScores, resultCopy } from "@/lib/compatibility";
 import { playTone, unlockAudio } from "@/lib/sound";
-import { FoodPickGrid } from "@/components/FoodPickGrid";
-import { PRIMARY_FOODS } from "@/lib/foods";
+import { HeartbreakIcon } from "@/components/HeartbreakIcon";
+import { MatchIcon } from "@/components/MatchIcon";
 
 export default function StagePage() {
   const params = useParams<{ eventId: string }>();
@@ -32,9 +32,15 @@ export default function StagePage() {
   useEffect(() => {
     fetch("/api/runtime")
       .then((r) => r.json())
-      .then((data: { origin?: string }) => {
-        const origin = data.origin || window.location.origin;
-        return QRCode.toDataURL(`${origin}/join/${eventId}`, { width: 420, margin: 1 });
+      .then((data: { origin?: string; lan?: string[]; joinUrl?: string }) => {
+        const here = window.location.origin;
+        const lan = data.lan?.[0];
+        const origin =
+          here.includes("localhost") || here.includes("127.0.0.1")
+            ? lan || data.origin || here
+            : here;
+        const join = data.joinUrl || `${origin}/join/${eventId}`;
+        return QRCode.toDataURL(join, { width: 420, margin: 1 });
       })
       .then(setQr)
       .catch(() => {
@@ -56,8 +62,12 @@ export default function StagePage() {
   }, []);
 
   useEffect(() => {
-    setStep(0);
     if (!view) return;
+    if (view.phase === "RESULT") {
+      setStep((s) => Math.max(s, 5));
+      return;
+    }
+    setStep(0);
     if (view.phase === "INTRO") {
       const t = [800, 2200, 4200];
       const ids = t.map((ms, i) => window.setTimeout(() => setStep(i + 1), ms));
@@ -68,9 +78,9 @@ export default function StagePage() {
       const ids = [1200, 2800].map((ms, i) => window.setTimeout(() => setStep(i + 1), ms));
       return () => ids.forEach(clearTimeout);
     }
-    if (view.phase === "COMPATIBILITY_CALCULATION" || view.phase === "RESULT") {
-      if (audioOn) playTone("sting");
-      const ids = [900, 1800, 2700, 3800, 5200, 6800].map((ms, i) =>
+    if (view.phase === "COMPATIBILITY_CALCULATION") {
+      if (audioOn) playTone("scan");
+      const ids = [1100, 2400, 3700, 5200, 6400].map((ms, i) =>
         window.setTimeout(() => setStep(i + 1), ms)
       );
       return () => ids.forEach(clearTimeout);
@@ -79,17 +89,29 @@ export default function StagePage() {
 
   if (!view) {
     return (
-      <div className="stage">
-        <h1 className="display">FOOD DATING</h1>
+      <div className="stage stage--sunset">
+        <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+        <p className="stage-tagline">Swipe right. Take a bite.</p>
       </div>
     );
   }
 
+  const gathering =
+    view.phase === "INTRO" ||
+    view.phase === "QR_JOIN" ||
+    view.phase === "SWIPING_LIVE" ||
+    view.phase === "WAITING" ||
+    view.phase === "ROUND_TRANSITION";
+  const sunset =
+    gathering ||
+    view.phase === "CAST_REVEAL" ||
+    (view.phase === "INTRO" && view.aggregates.totalParticipants === 0);
+
   return (
-    <div className="stage">
+    <div className={`stage ${sunset ? "stage--sunset" : "stage--light"}`}>
       {view.testMode && <div className="test-banner">TEST MODE</div>}
       <button
-        className="btn ghost audio-btn"
+        className="stage-audio"
         onClick={() => {
           setAudioOn((v) => {
             const next = !v;
@@ -101,7 +123,7 @@ export default function StagePage() {
           });
         }}
       >
-        {audioOn ? "SOUND ON" : "SOUND OFF"}
+        {audioOn ? "Sound on" : "Sound off"}
       </button>
       <StageBody view={view} qr={qr} step={step} audioOn={audioOn} />
     </div>
@@ -126,11 +148,34 @@ function StageBody({
 
   if (view.phase === "INTRO" && view.aggregates.totalParticipants === 0) {
     return (
-      <div>
-        <p className="tag">LIVE</p>
-        <h1 className="display">FOOD DATING</h1>
-        {step >= 1 && <h2 className="serif">YOU DON&apos;T CHOOSE THE FOOD.</h2>}
-        {step >= 2 && <h2 className="display">THE FOOD CHOOSES YOU.</h2>}
+      <div className="stage-panel stage-intro">
+        <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+        <p className="stage-tagline">Swipe right. Take a bite.</p>
+        {step >= 1 && <h2 className="stage-line">You don&apos;t choose the food.</h2>}
+        {step >= 2 && <h1 className="stage-display">The food chooses you.</h1>}
+      </div>
+    );
+  }
+
+  if (view.phase === "CAST_REVEAL") {
+    const pairs = view.castPairs ?? [];
+    return (
+      <div className="stage-cast">
+        <img className="stage-logo stage-logo-cast" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+        <p className="stage-kicker">Tonight&apos;s dates</p>
+        <div className="stage-cast-grid">
+          {pairs.map((pair) => (
+            <div key={pair.foodId} className={`stage-cast-card ${pair.done ? "done" : ""}`}>
+              <div className="stage-cast-photo">
+                <img src={pair.image} alt={pair.foodName} />
+              </div>
+              <div className="stage-cast-copy">
+                <strong>{pair.foodName}</strong>
+                <span>{pair.volunteerName || "—"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -148,70 +193,80 @@ function StageBody({
     const card = view.entertainment;
     if (!showFeed) {
       return (
-        <div>
-          <p className="tag">SCAN TO ENTER</p>
-          <h1 className="display">JOIN THE DATING POOL</h1>
+        <div className="stage-panel">
+          <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+          <p className="stage-kicker">Scan to enter</p>
+          <h1 className="stage-display">What&apos;s on the menu today?</h1>
+          <p className="stage-tagline">Swipe right. Take a bite.</p>
           {qr && (
             <div className="qr-box">
               <img src={qr} alt="Join QR" width={420} height={420} />
             </div>
           )}
-          <p>{n} {n === 1 ? "person is" : "people are"} in.</p>
+          <p className="stage-meta">
+            {n} {n === 1 ? "person is" : "people are"} in the pool
+          </p>
         </div>
       );
     }
     return (
       <div className="join-plus-feed">
         <div className="feed-copy">
-          <p className="tag">{n} PEOPLE IN THE POOL</p>
-          <h1 className="display">
-            {card?.headline ?? `${n} PEOPLE ARE CURRENTLY LOOKING FOR LOVE.`}
+          <img className="stage-logo stage-logo-left" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+          <p className="stage-kicker">{n} people in the pool</p>
+          <h1 className="stage-display">
+            {card?.headline ?? `${n} people are currently hunting for soul-food.`}
           </h1>
-          <p className="serif">{card?.body ?? "Keep swiping. Destiny is buffering."}</p>
+          <p className="stage-tagline">{card?.body ?? "Keep swiping. The menu is judging you back."}</p>
         </div>
         <div className="feed-qr">
-          <p className="tag">STILL OPEN</p>
+          <p className="stage-kicker">Still open</p>
           {qr && (
             <div className="qr-box">
-              <img src={qr} alt="Join QR" width={280} height={280} />
+              <img src={qr} alt="Join QR" width={420} height={420} />
             </div>
           )}
-          <p>Scan to join</p>
+          <p className="stage-meta">Scan to join</p>
         </div>
       </div>
     );
   }
 
-  if (view.phase === "VOLUNTEER_ANNOUNCEMENT" || (view.phase === "FOOD_SELECTION" && !food)) {
+  if (view.phase === "VOLUNTEER_ANNOUNCEMENT" || view.phase === "FOOD_SELECTION") {
     return (
-      <div style={{ width: "100%" }}>
-        <p className="tag">PLEASE COME TO THE STAGE</p>
-        <h1 className="display">{round?.volunteerName}</h1>
-        <h2 className="serif">PICK YOUR DATE.</h2>
-        <FoodPickGrid foods={PRIMARY_FOODS} usedFoodIds={view.usedFoodIds} large />
-      </div>
-    );
-  }
-
-  if (view.phase === "FOOD_SELECTION" && food && round) {
-    return (
-      <div>
-        <p className="tag">IT&apos;S A DATE</p>
-        <h1 className="display">
-          ❤️ {round.volunteerName} + {food.name}
+      <div className="stage-match">
+        <p className="match-kicker">
+          <span className="match-pip orange" />
+          IT&apos;S A
+          <span className="match-pip green" />
+        </p>
+        <h1 className="match-title">
+          Match<span className="match-bang">!</span>
         </h1>
-        <p className="serif">LET&apos;S SEE IF THIS RELATIONSHIP HAS A FUTURE.</p>
+        {food && (
+          <div className="match-card-wrap stage-match-card">
+            <StageFoodHero food={food} />
+            <div className="match-heart" aria-hidden>
+              ♥
+            </div>
+          </div>
+        )}
+        <h2 className="stage-volunteer-name">{round?.volunteerName}</h2>
+        <p className="match-wait">
+          {food ? `Wait until ${food.name} starts a conversation` : "Your date is on the way."}
+        </p>
       </div>
     );
   }
 
   if (view.phase === "QUESTION" || view.phase === "ANSWER_REVEAL") {
     return (
-      <div style={{ width: "100%" }}>
-        <p className="tag">
+      <div className="stage-ask">
+        {food && <StageFoodHero food={food} compact />}
+        <p className="stage-kicker">
           {round?.foodName} • Q {(round?.currentQuestion ?? 0) + 1} / {round?.totalQuestions}
         </p>
-        <h2 className="serif">{question?.prompt}</h2>
+        <h2 className="stage-question">{question?.prompt}</h2>
         <div className="options-stage">
           {question?.options.map((opt) => (
             <div
@@ -223,7 +278,7 @@ function StageBody({
           ))}
         </div>
         {view.phase === "ANSWER_REVEAL" && answer && (
-          <h2 className="display">VOLUNTEER CHOSE {answer.answer}</h2>
+          <p className="stage-chose">They chose {answer.answer}</p>
         )}
       </div>
     );
@@ -242,28 +297,72 @@ function StageBody({
 
   if (view.phase === "ROUND_TRANSITION") {
     return (
-      <div>
-        <p className="tag">NEXT</p>
-        <h1 className="display">THE FOOD IS STILL HUNGRY.</h1>
-        <p>Who&apos;s next?</p>
+      <div className="stage-panel">
+        <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+        <p className="stage-kicker">Next</p>
+        <h1 className="stage-display">The food is still hungry.</h1>
+        <p className="stage-tagline">Who&apos;s next?</p>
       </div>
     );
   }
 
   if (view.phase === "FINALE") {
     return (
-      <div>
-        <h1 className="display">THE FOOD HAS SPOKEN.</h1>
-        <p className="serif">You thought you were choosing the food. You weren&apos;t.</p>
+      <div className="stage-panel">
+        <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+        <h1 className="stage-display">The food has spoken.</h1>
+        <p className="stage-tagline">You thought you were choosing the food. You weren&apos;t.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1 className="display">FOOD DATING</h1>
+    <div className="stage-panel">
+      <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
     </div>
   );
+}
+
+function StageFoodHero({ food, compact }: { food: FoodProfile; compact?: boolean }) {
+  return (
+    <div
+      className={`stage-food-hero match-card--${food.id} ${compact ? "compact" : ""}`}
+      style={{ backgroundImage: `url("${food.image}")` }}
+      role="img"
+      aria-label={food.name}
+    />
+  );
+}
+
+function useCountUp(target: number, active: boolean, duration = 2600) {
+  const [value, setValue] = useState(0);
+  const [locked, setLocked] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setValue(0);
+      setLocked(false);
+      return;
+    }
+    const start = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const jitter = t < 0.88 ? Math.round((Math.random() - 0.5) * 8) : 0;
+      setValue(Math.max(0, Math.min(100, Math.round(target * eased) + jitter)));
+      if (t < 1) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        setValue(target);
+        setLocked(true);
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [active, target, duration]);
+
+  return { value, locked };
 }
 
 function Reveal({
@@ -283,6 +382,8 @@ function Reveal({
   const first = (round?.volunteerIndex ?? 0) === 0;
   const kind = round?.result ?? bandForScore(score).kind;
   const copy = resultCopy(foodName, kind, first);
+  const counting = step >= 5;
+  const { value, locked } = useCountUp(score, counting);
   const dims = useMemo(
     () =>
       round?.foodId
@@ -296,33 +397,88 @@ function Reveal({
   );
 
   useEffect(() => {
-    if (!resultPhase || step < 6) return;
-    if (audioOn) playTone(kind === "match" || kind === "strong" ? "match" : "nope");
-  }, [resultPhase, step, audioOn, kind]);
+    if (!audioOn) return;
+    if (step >= 1 && step <= 3) playTone("slam", step - 1);
+    if (step === 4) playTone("tension");
+    if (step === 5) playTone("rise");
+  }, [step, audioOn]);
 
-  const showFinal = resultPhase && step >= 5;
+  useEffect(() => {
+    if (!audioOn || !counting || locked) return;
+    let n = 0;
+    const id = window.setInterval(() => {
+      playTone("tick", n);
+      n += 1;
+    }, 90);
+    return () => window.clearInterval(id);
+  }, [audioOn, counting, locked]);
+
+  useEffect(() => {
+    if (!locked || !resultPhase || !audioOn) return;
+    playTone("lock");
+    return undefined;
+  }, [locked, resultPhase, audioOn]);
+
+  const showVerdict = resultPhase && locked;
+  const dimIndex = Math.min(step - 1, 2);
+  const dimValue = first ? [62, 47, 53][dimIndex] : dims[dimIndex]?.value;
+
+  if (step < 1) {
+    return (
+      <div className="stage-reveal">
+        <img className="stage-logo" src="/branding/flirtybites-logo.svg" alt="FlirtyBites" />
+        <p className="stage-kicker">Hang tight</p>
+        <h1 className="stage-display">Analysing chemistry...</h1>
+      </div>
+    );
+  }
+
+  if (step < 4) {
+    return (
+      <div className="stage-reveal stage-reveal-dim" key={step}>
+        <p className="stage-kicker">{dims[dimIndex]?.label}</p>
+        <div className="pct pct-slam">{dimValue}%</div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {step < 1 && <h1 className="display">ANALYSING CHEMISTRY...</h1>}
-      {step >= 1 && step < 5 && (
-        <div>
-          <p className="tag">{dims[Math.min(step - 1, 2)]?.label}</p>
-          <div className="pct">
-            {first ? [42, 31, 38][Math.min(step - 1, 2)] : dims[Math.min(step - 1, 2)]?.value}%
+    <div className={`stage-reveal stage-overall ${locked ? "is-locked" : ""} ${showVerdict ? "has-verdict" : ""}`}>
+      <div className="stage-score">
+        <p className="stage-overall-kicker">Overall compatibility</p>
+        {counting ? (
+          <div className={`pct-wrap ${locked ? "is-locked" : "is-counting"}`}>
+            <div className="pct pct-overall">
+              {value}
+              <span>%</span>
+            </div>
           </div>
-        </div>
-      )}
-      {step >= 4 && (
-        <div>
-          <p className="tag">OVERALL COMPATIBILITY</p>
-          <div className="pct">{score}%</div>
-          {showFinal && (
+        ) : (
+          <p className="stage-overall-wait">The food is deciding.</p>
+        )}
+      </div>
+      {showVerdict && (
+        <div className="stage-verdict">
+          {kind === "not-a-match" || first ? (
             <>
-              {first && <p className="tag">{foodName.toUpperCase()} HAS DECIDED.</p>}
-              <h1 className="display">{first ? "💔 NOT A MATCH" : copy.title}</h1>
-              <p className="serif">{copy.sub}</p>
-              {first && <p>Thank you for your service.</p>}
+              <HeartbreakIcon large sound={audioOn} />
+              <h1 className="stage-verdict-title">
+                You &amp; {foodName} want different things!
+              </h1>
+              <p className="stage-verdict-sub">{copy.sub}</p>
+            </>
+          ) : kind === "match" || kind === "strong" ? (
+            <>
+              <MatchIcon large sound={audioOn} />
+              <h1 className="stage-verdict-title">
+                It&apos;s a date, {round?.volunteerName ?? "you"}!
+              </h1>
+              <p className="stage-verdict-sub">{copy.sub}</p>
+            </>
+          ) : (
+            <>
+              <h1 className="stage-verdict-title">{copy.title}</h1>
+              <p className="stage-verdict-sub">{copy.sub}</p>
             </>
           )}
         </div>

@@ -16,6 +16,7 @@ export type StagePhase =
   | "QR_JOIN"
   | "SWIPING_LIVE"
   | "WAITING"
+  | "CAST_REVEAL"
   | "VOLUNTEER_ANNOUNCEMENT"
   | "FOOD_SELECTION"
   | "QUESTION"
@@ -48,6 +49,9 @@ export interface FoodProfile {
   name: string;
   slug: string;
   image: string;
+  originFlag: string;
+  originLabel: string;
+  tagline: string;
   personality: string[];
   bio: string;
   greenFlag: string;
@@ -133,6 +137,17 @@ export interface EventState {
   entertainmentLog: EntertainmentCard[];
   firstVolunteerRejected: boolean;
   lastActivityAt: number;
+  /** foodId -> participantId for the six date slots */
+  cast: Record<string, string>;
+  castRevealed: boolean;
+}
+
+export interface CastPair {
+  foodId: string;
+  foodName: string;
+  image: string;
+  volunteerName: string;
+  done: boolean;
 }
 
 export interface Aggregates {
@@ -168,6 +183,8 @@ export interface AudienceView {
   questions: FoodQuestion[];
   usedFoodIds: string[];
   reconnecting: boolean;
+  castRevealed: boolean;
+  matchedFood: FoodProfile | null;
 }
 
 export interface PublicRound {
@@ -198,6 +215,7 @@ export interface StageView {
   foods: FoodProfile[];
   questions: FoodQuestion[];
   usedFoodIds: string[];
+  castPairs: CastPair[];
 }
 
 export type ClientRole = "audience" | "controller" | "stage";

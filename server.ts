@@ -8,6 +8,7 @@ import type { EventState, ResultKind, StagePhase } from "./lib/types";
 import {
   answerQuestion,
   applySwipe,
+  assignCast,
   attachFood,
   audienceView,
   calculateCompatibility,
@@ -18,12 +19,14 @@ import {
   isEligible,
   joinParticipant,
   markFoodUsed,
+  maybeAdvanceGathering,
   nextQuestion,
   overrideResult,
   prevQuestion,
   resetEvent,
   resetFood,
   revealAnswer,
+  revealMatches,
   revealResult,
   returnToWaiting,
   selectVolunteer,
@@ -74,6 +77,8 @@ function getEvent(eventId: string) {
     events.set(id, event);
     persist();
   }
+  if (!event.cast) event.cast = {};
+  if (event.castRevealed == null) event.castRevealed = false;
   return event;
 }
 
@@ -120,7 +125,7 @@ app.prepare().then(() => {
   }
 
   io.on("connection", (socket) => {
-    socket.on("hello", (payload: { role: string; eventId: string; participantId?: string; key?: string }) => {
+    socket.on("hello", (payload: { role: string; eventId: string; participantId?: string; key?: string; claimVolunteer?: boolean }) => {
       const event = getEvent(payload.eventId);
       socket.data.eventId = event.id;
       socket.data.role = payload.role;
@@ -140,9 +145,17 @@ app.prepare().then(() => {
         return;
       }
       socket.join(`audience:${event.id}`);
-      if (payload.participantId) {
-        socket.data.participantId = payload.participantId;
-        socket.emit("audience", audienceView(event, payload.participantId));
+      let participantId = payload.participantId;
+      if (payload.claimVolunteer) {
+        const round = currentRound(event);
+        if (round && round.status !== "complete") {
+          participantId = round.participantId;
+          socket.emit("joined", { participantId });
+        }
+      }
+      if (participantId) {
+        socket.data.participantId = participantId;
+        socket.emit("audience", audienceView(event, participantId));
       }
     });
 
@@ -189,8 +202,14 @@ app.prepare().then(() => {
     socket.on("scan-food", ({ eventId, foodSlug }: { eventId: string; foodSlug: string }) => {
       try {
         const event = getEvent(eventId);
-        attachFood(event, foodSlug);
-        socket.emit("food-attached", { foodSlug });
+        const round = attachFood(event, foodSlug);
+        const participantId = round.participantId;
+        socket.data.participantId = participantId;
+        socket.data.eventId = event.id;
+        socket.join(`audience:${event.id}`);
+        socket.emit("food-attached", { foodSlug, participantId, eventId: event.id });
+        socket.emit("joined", { participantId });
+        socket.emit("audience", audienceView(event, participantId));
         broadcast(event);
       } catch (err) {
         socket.emit("error-message", err instanceof Error ? err.message : "Scan failed");
@@ -206,13 +225,15 @@ app.prepare().then(() => {
       try {
         const event = requireController();
         switch (payload.type) {
-          case "start":
+          case "start": {
+            const reopen =
+              event.status !== "live" &&
+              (event.phase === "INTRO" || event.phase === "FINALE" || event.status === "ended");
             setStatus(event, "live");
-            setPhase(event, "QR_JOIN");
+            if (reopen) setPhase(event, "QR_JOIN");
+            maybeAdvanceGathering(event);
             break;
-          case "pause":
-            setStatus(event, "paused");
-            break;
+          }
           case "end-event":
             setStatus(event, "ended");
             break;
@@ -222,8 +243,18 @@ app.prepare().then(() => {
           case "phase":
             setPhase(event, payload.phase as StagePhase);
             break;
+          case "assign-cast":
+            assignCast(event, String(payload.participantId), String(payload.foodId));
+            break;
+          case "reveal-matches":
+            revealMatches(event);
+            break;
           case "select-volunteer":
-            selectVolunteer(event, String(payload.participantId));
+            selectVolunteer(
+              event,
+              String(payload.participantId),
+              payload.foodSlug ? String(payload.foodSlug) : undefined
+            );
             break;
           case "pick-food":
             attachFood(event, String(payload.foodSlug));
@@ -288,11 +319,9 @@ app.prepare().then(() => {
             break;
           case "force-match":
             overrideResult(event, "match");
-            revealResult(event);
             break;
           case "force-reject":
             overrideResult(event, "not-a-match");
-            revealResult(event);
             break;
           case "simulate":
             simulateParticipants(event, Number(payload.count) || 10);

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { PRIMARY_FOODS } from "@/lib/foods";
 import { getSocket } from "@/lib/useSocket";
-import type { EventState, ResultKind, StagePhase } from "@/lib/types";
+import type { EventState, FoodQuestion, StagePhase } from "@/lib/types";
 import { questionsForFood } from "@/lib/questions";
 
 type Payload = {
@@ -21,6 +21,7 @@ const PHASE_LABEL: Record<StagePhase, string> = {
   QR_JOIN: "Join QR",
   SWIPING_LIVE: "Swiping",
   WAITING: "Waiting",
+  CAST_REVEAL: "Matches",
   VOLUNTEER_ANNOUNCEMENT: "Announce",
   FOOD_SELECTION: "Pick food",
   QUESTION: "Question",
@@ -37,7 +38,7 @@ export default function ControllerPage() {
   const [key, setKey] = useState("");
   const [authed, setAuthed] = useState(false);
   const [data, setData] = useState<Payload | null>(null);
-  const [filter, setFilter] = useState("eligible");
+  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +60,7 @@ export default function ControllerPage() {
   }
 
   function act(type: string, extra: Record<string, unknown> = {}) {
-    if (["reset", "end-event", "end-round", "override", "force-match", "force-reject"].includes(type)) {
+    if (["reset", "end-event", "end-round", "override"].includes(type)) {
       if (confirm !== type) {
         setConfirm(type);
         return;
@@ -74,6 +75,7 @@ export default function ControllerPage() {
   const round = event?.rounds.find((r) => r.id === event.currentRoundId);
   const volunteer = event?.participants.find((p) => p.id === round?.participantId);
   const selectedPerson = event?.participants.find((p) => p.id === selected);
+  const cast = event?.cast ?? {};
   const currentQ = round?.foodId ? questionsForFood(round.foodId)[round.currentQuestion] : null;
   const currentAnswer = currentQ
     ? round?.answers.find((a) => a.questionId === currentQ.id)?.answer
@@ -83,8 +85,7 @@ export default function ControllerPage() {
     if (!event) return [];
     return event.participants.filter((p) => {
       if (search && !p.fullName.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filter === "completed") return Boolean(p.completedAt);
-      if (filter === "eligible") return data?.eligible.includes(p.id);
+      if (filter === "ready") return data?.eligible.includes(p.id);
       if (PRIMARY_FOODS.some((f) => f.id === filter)) {
         return event.swipes.some(
           (s) => s.participantId === p.id && s.foodId === filter && s.direction === "right"
@@ -114,6 +115,7 @@ export default function ControllerPage() {
   }
 
   const roundNum = event.rounds.filter((r) => r.status === "complete").length + (round ? 1 : 0);
+  const booked = PRIMARY_FOODS.filter((f) => cast[f.id]).length;
 
   return (
     <div className="controller dash">
@@ -121,33 +123,46 @@ export default function ControllerPage() {
       <header className="dash-top">
         <div className="dash-top-left">
           <h1 className="display">CONTROL</h1>
-          <div className="dash-metric">
-            <span>Event</span>
-            <b>{event.status.toUpperCase()}</b>
+          <div className={`dash-metric ${event.status === "live" ? "is-live" : ""}`}>
+            <span>Show</span>
+            <b>{event.status === "live" ? "LIVE" : event.status === "ended" ? "ENDED" : "NOT STARTED"}</b>
           </div>
           <div className="dash-metric">
-            <span>Stage</span>
+            <span>On stage now</span>
             <b>{PHASE_LABEL[event.phase]}</b>
           </div>
           <div className="dash-metric">
-            <span>In room</span>
+            <span>In the room</span>
             <b>{data.aggregates.totalParticipants}</b>
           </div>
           <div className="dash-metric">
-            <span>Done</span>
-            <b>{data.aggregates.completed}</b>
+            <span>Dates booked</span>
+            <b>
+              {booked} / 6
+            </b>
           </div>
           <div className="dash-metric">
             <span>Round</span>
             <b>{roundNum || "—"}</b>
           </div>
         </div>
-        <div className="dash-top-right">
-          <button className="btn" onClick={() => act("start")}>
-            Start
+        <div className="dash-show-controls">
+          {event.status === "live" ? (
+            <span className="show-live-flag">Show is live</span>
+          ) : (
+            <button className="btn start-cta" onClick={() => act("start")}>
+              Start show
+            </button>
+          )}
+          <button
+            className={`btn match-them-cta ${event.castRevealed ? "is-tapped" : ""}`}
+            disabled={booked < 6 || Boolean(round) || event.castRevealed}
+            onClick={() => act("reveal-matches")}
+          >
+            {event.castRevealed ? "Matched" : "Match them"}
           </button>
-          <button className="btn ghost" onClick={() => act("pause")}>
-            Pause
+          <button className="btn reset-cta" onClick={() => act("reset")}>
+            {confirm === "reset" ? "Tap again to reset" : "Reset everything"}
           </button>
         </div>
       </header>
@@ -158,23 +173,47 @@ export default function ControllerPage() {
         </div>
       )}
 
+      <div className="dash-cast">
+        {PRIMARY_FOODS.map((f) => {
+          const pid = cast[f.id];
+          const person = event.participants.find((p) => p.id === pid);
+          const used = event.usedFoodIds.includes(f.id);
+          const live = round?.foodId === f.id;
+          const canCall = Boolean(person) && !used && !round;
+          return (
+            <div
+              key={f.id}
+              className={`cast-slot ${person ? "filled" : ""} ${used ? "used" : ""} ${live ? "live" : ""}`}
+            >
+              <strong>{f.name}</strong>
+              <span>{person?.fullName ?? "Tap a ❤️ below"}</span>
+              {live ? (
+                <em>On stage</em>
+              ) : used ? (
+                <em>Done</em>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-call-stage"
+                  disabled={!canCall}
+                  onClick={() => {
+                    if (!person || !canCall) return;
+                    act("select-volunteer", { participantId: person.id, foodSlug: f.slug });
+                  }}
+                >
+                  Call on Stage
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       <div className="dash-body">
         <section className="dash-main">
-          <div className="dash-foods">
-            {PRIMARY_FOODS.map((f) => {
-              const used = event.usedFoodIds.includes(f.id);
-              return (
-                <button
-                  key={f.id}
-                  className={`food-chip ${used ? "used" : ""} ${filter === f.id ? "on" : ""}`}
-                  onClick={() => setFilter(filter === f.id ? "eligible" : f.id)}
-                >
-                  {f.name}
-                  <small>{used ? "USED" : "available"}</small>
-                </button>
-              );
-            })}
-          </div>
+          <p className="dash-hint">
+            Tap a heart to book that person against that food. When all six are booked, press Match them. Then Call on Stage for whoever should walk up.
+          </p>
 
           <div className="dash-tools">
             <input
@@ -183,19 +222,12 @@ export default function ControllerPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
             <div className="seg">
-              {[
-                ["eligible", "Eligible"],
-                ["completed", "Done"],
-                ["all", "All"]
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  className={filter === id ? "on" : ""}
-                  onClick={() => setFilter(id)}
-                >
-                  {label}
-                </button>
-              ))}
+              <button className={filter === "all" ? "on" : ""} onClick={() => setFilter("all")}>
+                Everyone
+              </button>
+              <button className={filter === "ready" ? "on" : ""} onClick={() => setFilter("ready")}>
+                Ready for stage
+              </button>
             </div>
           </div>
 
@@ -209,8 +241,8 @@ export default function ControllerPage() {
                   {PRIMARY_FOODS.map((f) => (
                     <th
                       key={f.id}
-                      className={`food-th ${event.usedFoodIds.includes(f.id) ? "used-col" : ""} ${filter === f.id ? "on" : ""}`}
-                      onClick={() => setFilter(filter === f.id ? "eligible" : f.id)}
+                      className={`food-th ${event.usedFoodIds.includes(f.id) || cast[f.id] ? "muted-col" : ""} ${filter === f.id ? "on" : ""}`}
+                      onClick={() => setFilter(filter === f.id ? "all" : f.id)}
                     >
                       {f.name}
                     </th>
@@ -218,24 +250,47 @@ export default function ControllerPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((p) => (
+                {rows.map((p) => {
+                  const bookedFood = PRIMARY_FOODS.find((f) => cast[f.id] === p.id);
+                  return (
                   <tr
                     key={p.id}
-                    className={`${data.eligible.includes(p.id) ? "eligible" : ""} ${selected === p.id ? "selected" : ""}`}
+                    className={`${data.eligible.includes(p.id) ? "eligible" : ""} ${selected === p.id ? "selected" : ""} ${bookedFood ? "casted muted-row" : ""}`}
                     onClick={() => setSelected(p.id)}
                   >
-                    <td className="name">{p.fullName}</td>
+                    <td className="name">
+                      {p.fullName}
+                      {bookedFood ? (
+                        <em className="ready-tag">{bookedFood.name}</em>
+                      ) : data.eligible.includes(p.id) ? (
+                        <em className="ready-tag">ready</em>
+                      ) : null}
+                    </td>
                     {PRIMARY_FOODS.map((f) => {
                       const swipe = event.swipes.find(
                         (s) => s.participantId === p.id && s.foodId === f.id
                       );
+                      const picked = cast[f.id] === p.id;
+                      const colTaken = Boolean(cast[f.id]);
+                      const muted = Boolean(bookedFood) || colTaken || event.usedFoodIds.includes(f.id);
                       return (
                         <td
                           key={f.id}
-                          className={event.usedFoodIds.includes(f.id) ? "used-col" : ""}
+                          className={`${muted ? "muted-cell" : ""} ${picked ? "heart-picked" : ""}`}
                         >
                           {swipe?.direction === "right" ? (
-                            <span className="heart">❤️</span>
+                            <button
+                              type="button"
+                              className={`heart-btn ${picked ? "picked" : ""} ${muted ? "is-muted" : ""}`}
+                              aria-label={`Book ${p.fullName} for ${f.name}`}
+                              disabled={muted && !picked}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                act("assign-cast", { participantId: p.id, foodId: f.id });
+                              }}
+                            >
+                              <span className="heart-glyph">♥</span>
+                            </button>
                           ) : swipe?.direction === "left" ? (
                             <span className="nope">✕</span>
                           ) : (
@@ -245,7 +300,8 @@ export default function ControllerPage() {
                       );
                     })}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -253,156 +309,39 @@ export default function ControllerPage() {
           <div className="dash-footer">
             <span>
               {selectedPerson
-                ? `Selected: ${selectedPerson.fullName}`
-                : "Click a row, then call them up."}
+                ? `Tap a ❤️ on ${selectedPerson.fullName}'s row to book their food.`
+                : "Tap a ❤️ to book a date. Then tap that slot on top to call them."}
             </span>
-            <button
-              className="btn gold"
-              disabled={!selected}
-              onClick={() => act("select-volunteer", { participantId: selected })}
-            >
-              Call {selectedPerson?.fullName ?? "volunteer"} to stage
-            </button>
           </div>
         </section>
 
         <aside className="dash-side">
           {round ? (
-            <div className="live-card">
-              <h2>LIVE ROUND</h2>
-              <div className="kv">
-                <b>Volunteer</b>
-                <span>{volunteer?.fullName}</span>
-                <b>Food</b>
-                <span>{PRIMARY_FOODS.find((f) => f.id === round.foodId)?.name ?? "Waiting for pick"}</span>
-                <b>Question</b>
-                <span>
-                  {round.currentQuestion + 1} / 5
-                </span>
-                <b>Answer</b>
-                <span>{currentAnswer || "—"}</span>
-                <b>Score</b>
-                <span>{round.compatibilityScore ?? "—"}%</span>
-              </div>
-              <div className="side-actions">
-                {!round.foodId && (
-                  <>
-                    <p style={{ margin: 0 }}>Backup: pick their food if the phone fails.</p>
-                    {PRIMARY_FOODS.map((f) => (
-                      <button
-                        key={f.id}
-                        className="btn ghost"
-                        disabled={event.usedFoodIds.includes(f.id)}
-                        onClick={() => act("pick-food", { foodSlug: f.slug })}
-                      >
-                        {event.usedFoodIds.includes(f.id) ? `${f.name} used` : f.name}
-                      </button>
-                    ))}
-                  </>
-                )}
-                {round.foodId && currentQ && (
-                  <>
-                    <p style={{ margin: 0 }}>Backup answers for this question</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      {currentQ.options.map((opt) => (
-                        <button
-                          key={opt.key}
-                          className={`btn ${currentAnswer === opt.key ? "" : "ghost"}`}
-                          onClick={() => act("answer", { questionId: currentQ.id, answer: opt.key })}
-                        >
-                          {opt.key}. {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <button className="btn ghost" onClick={() => act("prev-question")}>
-                    Prev Q
-                  </button>
-                  <button className="btn" onClick={() => act("next-question")}>
-                    Next Q
-                  </button>
-                </div>
-                <button className="btn ghost" onClick={() => act("reveal-answer")}>
-                  Reveal answer
-                </button>
-                <button className="btn ghost" onClick={() => act("calculate")}>
-                  Calculate
-                </button>
-                <button className="btn gold block" onClick={() => act("reveal-result")}>
-                  Reveal result
-                </button>
-                <button className="btn danger block" onClick={() => act("end-round")}>
-                  {confirm === "end-round" ? "Confirm end round" : "End round"}
-                </button>
-              </div>
-            </div>
+            <LiveRoundGuide
+              event={event}
+              volunteerName={volunteer?.fullName ?? "Volunteer"}
+              foodName={PRIMARY_FOODS.find((f) => f.id === round.foodId)?.name ?? null}
+              question={currentQ}
+              answer={currentAnswer}
+              confirm={confirm}
+              act={act}
+            />
           ) : (
-            <div className="idle-hint">
-              Stage runs itself until you pick someone. After 5 people join, jokes appear next to the QR. Click a name, then call them up.
-            </div>
+            <ol className="show-steps idle-steps">
+              <li>
+                <b>1. Book the six dates</b>
+                <span>Tap a heart in the grid. Names appear on top.</span>
+              </li>
+              <li>
+                <b>2. Match them</b>
+                <span>When all six slots are filled, press Match them. It turns green (Matched) and all six phones show It&apos;s a Match.</span>
+              </li>
+              <li>
+                <b>3. Call someone up</b>
+                <span>Press Call on Stage. Stage zooms in on that name. Then they scan and answer.</span>
+              </li>
+            </ol>
           )}
-
-          <details className="more">
-            <summary>Mark food used</summary>
-            <div className="side-actions">
-              {PRIMARY_FOODS.map((f) => (
-                <button
-                  key={f.id}
-                  className="btn ghost"
-                  onClick={() =>
-                    act(event.usedFoodIds.includes(f.id) ? "reset-food" : "mark-food", {
-                      foodId: f.id
-                    })
-                  }
-                >
-                  {event.usedFoodIds.includes(f.id) ? `Reset ${f.name}` : `Use ${f.name}`}
-                </button>
-              ))}
-            </div>
-          </details>
-
-          <details className="more">
-            <summary>Emergency</summary>
-            <div className="side-actions">
-              <button className="btn ghost" onClick={() => act("skip-round")}>
-                Skip round
-              </button>
-              <button className="btn ghost" onClick={() => act("skip-question")}>
-                Skip question
-              </button>
-              <button className="btn ghost" onClick={() => act("force-match")}>
-                {confirm === "force-match" ? "Confirm force match" : "Force match"}
-              </button>
-              <button className="btn ghost" onClick={() => act("force-reject")}>
-                {confirm === "force-reject" ? "Confirm force rejection" : "Force rejection"}
-              </button>
-              <select
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  act("override", { kind: e.target.value as ResultKind });
-                  e.target.value = "";
-                }}
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Override result
-                </option>
-                <option value="not-a-match">Not a Match</option>
-                <option value="complicated">It&apos;s Complicated</option>
-                <option value="could-be">There Could Be Something</option>
-                <option value="strong">Strong Chemistry</option>
-                <option value="match">It&apos;s a Match</option>
-              </select>
-              <button className="btn danger" onClick={() => act("end-event")}>
-                {confirm === "end-event" ? "Confirm end event" : "End event"}
-              </button>
-              <button className="btn danger" onClick={() => act("reset")}>
-                {confirm === "reset" ? "Confirm reset event" : "Reset event"}
-              </button>
-            </div>
-          </details>
 
           <details className="more">
             <summary>Test mode</summary>
@@ -416,6 +355,184 @@ export default function ControllerPage() {
           </details>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function LiveRoundGuide({
+  event,
+  volunteerName,
+  foodName,
+  question,
+  answer,
+  confirm,
+  act
+}: {
+  event: EventState;
+  volunteerName: string;
+  foodName: string | null;
+  question: FoodQuestion | null;
+  answer: string | undefined;
+  confirm: string | null;
+  act: (type: string, extra?: Record<string, unknown>) => void;
+}) {
+  const round = event.rounds.find((r) => r.id === event.currentRoundId);
+
+  useEffect(() => {
+    if (event.phase !== "COMPATIBILITY_CALCULATION" || !event.currentRoundId) return undefined;
+    const t = window.setTimeout(() => {
+      getSocket().emit("controller-action", { type: "reveal-result" });
+    }, 6800);
+    return () => window.clearTimeout(t);
+  }, [event.phase, event.currentRoundId]);
+
+  if (!round) return null;
+  const phase = event.phase;
+  const waitingScan = phase === "VOLUNTEER_ANNOUNCEMENT" || phase === "FOOD_SELECTION";
+  const asking = phase === "QUESTION" || phase === "ANSWER_REVEAL";
+  const tallying = phase === "COMPATIBILITY_CALCULATION";
+  const result = phase === "RESULT";
+  const qNum = round.currentQuestion + 1;
+  const questions = round.foodId ? questionsForFood(round.foodId) : [];
+  const qTotal = questions.length || 5;
+  const lastQ = qNum >= qTotal;
+  const answered = Boolean(answer);
+  const allAnswered =
+    questions.length > 0 &&
+    questions.every((q) => round.answers.some((a) => a.questionId === q.id));
+  const readyToLock = allAnswered || (lastQ && answered);
+
+  return (
+    <div className="live-card">
+      <p className="live-who">
+        {volunteerName}
+        {foodName ? ` × ${foodName}` : ""}
+      </p>
+
+      <ol className="show-steps">
+        <li className={waitingScan ? "is-now" : "is-done"}>
+          <b>1. Scan</b>
+          <span>
+            {waitingScan
+              ? "Volunteer scans the stage QR. Questions then open on phone, stage, and here."
+              : "QR scanned."}
+          </span>
+          {waitingScan && round.foodId && (
+            <button
+              className="btn ghost"
+              onClick={() => {
+                const food = PRIMARY_FOODS.find((f) => f.id === round.foodId);
+                if (food) act("pick-food", { foodSlug: food.slug });
+              }}
+            >
+              Phone failed? Open questions now
+            </button>
+          )}
+          {waitingScan && !round.foodId && (
+            <div className="step-backup">
+              <p>Phone failed? Pick their food here.</p>
+              {PRIMARY_FOODS.map((f) => (
+                <button
+                  key={f.id}
+                  className="btn ghost"
+                  disabled={event.usedFoodIds.includes(f.id)}
+                  onClick={() => act("pick-food", { foodSlug: f.slug })}
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </li>
+
+        <li className={asking ? "is-now" : waitingScan ? "" : "is-done"}>
+          <b>2. Questions {asking ? `· ${qNum} / ${qTotal}` : ""}</b>
+          {asking && question ? (
+            <>
+              <p className="step-prompt">{question.prompt}</p>
+              <div className="step-opts">
+                {question.options.map((opt) => (
+                  <button
+                    key={opt.key}
+                    className={`btn ${answer === opt.key ? "picked-ans" : "ghost"}`}
+                    onClick={() => act("answer", { questionId: question.id, answer: opt.key })}
+                  >
+                    {opt.key}. {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="step-hint">
+                {answered
+                  ? "Answer is in. Phone and stage are showing it."
+                  : "They answer on the phone. Use these only if the phone fails."}
+              </p>
+              {answered && !lastQ && (
+                <button className="btn-critical" onClick={() => act("next-question")}>
+                  Next question
+                </button>
+              )}
+              {readyToLock && (
+                <>
+                  <p className="step-hint">All five answers are in. Accept or reject this date.</p>
+                  <div className="step-force">
+                    <button className="btn-force accept" onClick={() => act("force-match")}>
+                      Accept
+                    </button>
+                    <button className="btn-force reject" onClick={() => act("force-reject")}>
+                      Reject
+                    </button>
+                  </div>
+                </>
+              )}
+              {!answered && (
+                <button className="btn ghost" onClick={() => act("skip-question")}>
+                  Skip this question
+                </button>
+              )}
+            </>
+          ) : (
+            <span>{waitingScan ? "Waiting for the QR scan." : "Questions done."}</span>
+          )}
+        </li>
+
+        <li className={tallying ? "is-now" : result ? "is-done" : ""}>
+          <b>3. Compatibility</b>
+          {tallying ? (
+            <>
+              <div className="side-score">
+                {round.compatibilityScore ?? "—"}
+                <span>%</span>
+              </div>
+              <span>
+                {round.result === "match" || round.result === "strong"
+                  ? "Accepted. Stage is counting up to a date."
+                  : "Rejected. Stage is counting up to a miss."}
+              </span>
+            </>
+          ) : result ? (
+            <span>
+              {round.result === "match" || round.result === "strong" ? "Accepted" : "Rejected"}
+              {round.compatibilityScore != null ? ` · ${round.compatibilityScore}%` : ""}.
+            </span>
+          ) : (
+            <span>After Accept or Reject.</span>
+          )}
+        </li>
+
+        <li className={result ? "is-now" : ""}>
+          <b>4. Close the round</b>
+          {result ? (
+            <>
+              <span>Clear the stage, then call the next date from the top row.</span>
+              <button className="btn-critical danger" onClick={() => act("end-round")}>
+                {confirm === "end-round" ? "Tap again to end round" : "End round"}
+              </button>
+            </>
+          ) : (
+            <span>After the result.</span>
+          )}
+        </li>
+      </ol>
     </div>
   );
 }

@@ -73,5 +73,5 @@ export function resultCopy(foodName: string, kind: ResultKind, firstRejection: b
   if (kind === "strong") {
     return { title: "STRONG CHEMISTRY.", sub: "The room can feel it. So can the chutney." };
   }
-  return { title: "IT'S A MATCH! ❤️", sub: "The food chose you. Don't mess this up." };
+  return { title: "IT'S A DATE!", sub: "The food chose you. Don't mess this up." };
 }
