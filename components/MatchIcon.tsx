@@ -55,7 +55,7 @@ export function MatchIcon({ large, sound }: { large?: boolean; sound?: boolean }
             <feDropShadow dx="0" dy="7" stdDeviation="5" floodColor="#8B1020" floodOpacity="0.28" />
           </filter>
         </defs>
-        <g className="match-heart" filter={`url(#${softId})`}>
+        <g className="match-icon-heart" filter={`url(#${softId})`}>
           <path
             fill={`url(#${fillId})`}
             d="M165.5 71.2C157.2 50.8 128 47.2 119.2 67.8C110.4 88.6 127.8 115.2 165.5 140.2C203.2 115.2 220.6 88.6 211.8 67.8C203 47.2 173.8 50.8 165.5 71.2Z"

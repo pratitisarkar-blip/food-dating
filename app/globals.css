@@ -1524,7 +1524,7 @@ details.more summary {
   .heartbreak-half,
   .heartbreak-glow,
   .heartbreak-shards .shard,
-  .match-heart,
+  .match-icon-heart,
   .match-icon-glow,
   .match-sparks .spark {
     animation: none;
@@ -1874,13 +1874,14 @@ details.more summary {
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(255, 90, 100, 0.34) 0%, rgba(126, 217, 87, 0.12) 42%, rgba(255, 90, 100, 0) 72%);
   filter: blur(10px);
-  animation: match-glow 1.9s ease both;
+  animation: match-glow 0.9s ease both, match-glow-pump 0.95s ease-in-out 0.9s infinite;
   pointer-events: none;
 }
-.match-heart {
+.match-icon-heart {
   transform-box: fill-box;
   transform-origin: 50% 70%;
-  animation: match-beat 1.9s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+  animation: match-beat 0.9s cubic-bezier(0.2, 0.85, 0.25, 1) both,
+    match-pump 0.95s ease-in-out 0.9s infinite;
 }
 .match-sparks .spark {
   opacity: 0;
@@ -1894,16 +1895,26 @@ details.more summary {
 .match-sparks .s5 { animation: match-spark 1.9s ease 0.12s both; }
 @keyframes match-beat {
   0% { transform: scale(0.72); opacity: 0; }
-  22% { transform: scale(1.08); opacity: 1; }
-  34% { transform: scale(0.94); }
-  46% { transform: scale(1.16); }
-  58% { transform: scale(0.98); }
-  72%, 100% { transform: scale(1); }
+  55% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes match-pump {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.16); }
+  24% { transform: scale(1); }
+  38% { transform: scale(1.22); }
+  52% { transform: scale(1); }
 }
 @keyframes match-glow {
   0%, 18% { opacity: 0; }
-  46% { opacity: 1; }
-  100% { opacity: 0.7; }
+  100% { opacity: 0.75; }
+}
+@keyframes match-glow-pump {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+  12% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.12); }
+  24% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  38% { opacity: 1; transform: translate(-50%, -50%) scale(1.18); }
+  52% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
 }
 @keyframes match-spark {
   0%, 28% { opacity: 0; transform: translate(0, 0) scale(0.4); }

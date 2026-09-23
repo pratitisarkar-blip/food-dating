@@ -28,9 +28,8 @@ Controller key: `showtime` (override with `CONTROLLER_KEY`)
 3. Audience scans the stage QR, enters full name, swipes 10 foods.
 4. Controller watches the matrix, SELECT VOLUNTEER.
 5. Volunteer scans one physical food QR.
-6. Controller advances questions, then CALCULATE / REVEAL RESULT.
-7. First volunteer is always **not a match** at 37%. Later volunteers use the answer weights.
-8. END ROUND marks that food USED.
+6. Controller advances questions, then Accept or Reject.
+7. END ROUND marks that food USED.
 
 Test mode
 

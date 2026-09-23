@@ -56,7 +56,6 @@ export function createEvent(id: string): EventState {
     currentRoundId: null,
     entertainment: null,
     entertainmentLog: [],
-    firstVolunteerRejected: false,
     lastActivityAt: Date.now(),
     cast: {},
     castRevealed: false
@@ -535,35 +534,26 @@ export function prevQuestion(event: EventState) {
 }
 
 function showScoreFor(kind: ResultKind, volunteerIndex: number) {
+  const i = Math.max(0, volunteerIndex);
   if (kind === "match") {
-    if (volunteerIndex < 2) return 91;
-    const extras = [94, 87, 96, 89, 93, 85, 98, 82];
-    return extras[(volunteerIndex - 2) % extras.length];
+    const extras = [91, 94, 87, 96, 89, 93, 85, 98];
+    return extras[i % extras.length];
   }
   if (kind === "not-a-match") {
-    if (volunteerIndex < 2) return 54;
-    const extras = [47, 61, 38, 58, 49, 42, 35, 56];
-    return extras[(volunteerIndex - 2) % extras.length];
+    const extras = [54, 47, 61, 38, 58, 49, 42, 35];
+    return extras[i % extras.length];
   }
-  if (kind === "strong") return volunteerIndex < 2 ? 82 : [84, 79, 86, 76][(volunteerIndex - 2) % 4];
-  if (kind === "complicated") return volunteerIndex < 2 ? 52 : [48, 55, 44, 57][(volunteerIndex - 2) % 4];
-  if (kind === "could-be") return volunteerIndex < 2 ? 68 : [64, 71, 66, 73][(volunteerIndex - 2) % 4];
+  if (kind === "strong") return [82, 84, 79, 86, 76][i % 5];
+  if (kind === "complicated") return [52, 48, 55, 44, 57][i % 5];
+  if (kind === "could-be") return [68, 64, 71, 66, 73][i % 5];
   return 50;
 }
 
 export function calculateCompatibility(event: EventState) {
   const round = currentRound(event);
   if (!round?.foodId) throw new Error("No food selected.");
-  const isFirst = !event.firstVolunteerRejected;
   let score = scoreAnswers(round.foodId, round.answers);
   let kind = bandForScore(score).kind;
-  if (isFirst) {
-    score = showScoreFor("not-a-match", round.volunteerIndex);
-    kind = "not-a-match";
-  } else if (round.volunteerIndex === 1) {
-    score = showScoreFor("match", round.volunteerIndex);
-    kind = "match";
-  }
   if (round.overrideResult) {
     kind = round.overrideResult;
     score = showScoreFor(kind, round.volunteerIndex);
@@ -596,7 +586,6 @@ export function endRound(event: EventState) {
   if (round.foodId && !event.usedFoodIds.includes(round.foodId)) {
     event.usedFoodIds.push(round.foodId);
   }
-  event.firstVolunteerRejected = true;
   event.currentRoundId = null;
   if (event.castRevealed) {
     event.phase = "CAST_REVEAL";

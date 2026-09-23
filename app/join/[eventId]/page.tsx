@@ -372,12 +372,11 @@ function SwipeCard({
 function CompatibilityScreen({ view }: { view: AudienceView }) {
   const round = view.round!;
   const score = round.compatibilityScore ?? 0;
-  const first = round.volunteerIndex === 0;
   const kind = round.result ?? bandForScore(score).kind;
-  const copy = resultCopy(round.foodName ?? "The Food", kind, first);
+  const copy = resultCopy(round.foodName ?? "The Food", kind);
   const ready = view.phase === "RESULT" && round.compatibilityScore != null;
   const who = round.volunteerName || "you";
-  const miss = kind === "not-a-match" || first;
+  const miss = kind === "not-a-match";
   const hit = kind === "match" || kind === "strong";
 
   return (

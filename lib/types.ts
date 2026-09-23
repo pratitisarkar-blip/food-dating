@@ -135,7 +135,6 @@ export interface EventState {
   currentRoundId: string | null;
   entertainment: EntertainmentCard | null;
   entertainmentLog: EntertainmentCard[];
-  firstVolunteerRejected: boolean;
   lastActivityAt: number;
   /** foodId -> participantId for the six date slots */
   cast: Record<string, string>;

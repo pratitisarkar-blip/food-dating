@@ -379,9 +379,8 @@ function Reveal({
   const round = view.round;
   const foodName = round?.foodName ?? "The Food";
   const score = round?.compatibilityScore ?? 0;
-  const first = (round?.volunteerIndex ?? 0) === 0;
   const kind = round?.result ?? bandForScore(score).kind;
-  const copy = resultCopy(foodName, kind, first);
+  const copy = resultCopy(foodName, kind);
   const counting = step >= 5;
   const { value, locked } = useCountUp(score, counting);
   const dims = useMemo(
@@ -459,7 +458,7 @@ function Reveal({
       </div>
       {showVerdict && (
         <div className="stage-verdict">
-          {kind === "not-a-match" || first ? (
+          {kind === "not-a-match" ? (
             <>
               <HeartbreakIcon large sound={audioOn} />
               <h1 className="stage-verdict-title">

@@ -29,8 +29,8 @@ export function dimensionScores(foodSlug: string, answers: StageAnswer[]) {
   });
 }
 
-export function resultCopy(foodName: string, kind: ResultKind, firstRejection: boolean) {
-  if (firstRejection || kind === "not-a-match") {
+export function resultCopy(foodName: string, kind: ResultKind) {
+  if (kind === "not-a-match") {
     const lines: Record<string, { title: string; sub: string }> = {
       Samosa: {
         title: "SAMOSA HAS SPOKEN.",
