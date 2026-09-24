@@ -124,61 +124,61 @@ export const QUESTIONS: FoodQuestion[] = [
   {
     id: "protein-bar-1",
     foodSlug: "protein-bar",
-    prompt: "Protein Bar asks your daily protein intake.",
+    prompt: "The wrapper says “30g protein.”",
     dimension: "MACRO CHEMISTRY",
     options: [
-      { key: "A", label: "Proudly tell them.", weight: 94 },
-      { key: "B", label: "That's personal.", weight: 42 },
-      { key: "C", label: "I have no idea.", weight: 50 },
-      { key: "D", label: "I came here for love, not an audit.", weight: 28 }
+      { key: "A", label: "Nice.", weight: 70 },
+      { key: "B", label: "Finally.", weight: 82 },
+      { key: "C", label: "Gains.", weight: 92 },
+      { key: "D", label: "Marriage.", weight: 96 }
     ]
   },
   {
     id: "protein-bar-2",
     foodSlug: "protein-bar",
-    prompt: "First date activity?",
+    prompt: "Your Protein Bar is ₹300.",
     dimension: "LIFESTYLE",
     options: [
-      { key: "A", label: "Gym.", weight: 90 },
-      { key: "B", label: "Walk.", weight: 74 },
-      { key: "C", label: "Dinner.", weight: 48 },
-      { key: "D", label: "Cheat meal.", weight: 32 }
+      { key: "A", label: "Fine.", weight: 74 },
+      { key: "B", label: "Premium.", weight: 86 },
+      { key: "C", label: "EMI.", weight: 40 },
+      { key: "D", label: "Investment.", weight: 90 }
     ]
   },
   {
     id: "protein-bar-3",
     foodSlug: "protein-bar",
-    prompt: "Protein Bar says: “Sugar is bad.”",
+    prompt: "Someone asks for a bite.",
     dimension: "VALUES",
     options: [
-      { key: "A", label: "I agree.", weight: 92 },
-      { key: "B", label: "We need to talk.", weight: 46 },
-      { key: "C", label: "That's a red flag.", weight: 18 },
-      { key: "D", label: "I'm eating Gulab Jamun in front of you.", weight: 24 }
+      { key: "A", label: "Sure.", weight: 50 },
+      { key: "B", label: "Tiny.", weight: 68 },
+      { key: "C", label: "Never.", weight: 88 },
+      { key: "D", label: "Protein-tax.", weight: 80 }
     ]
   },
   {
     id: "protein-bar-4",
     foodSlug: "protein-bar",
-    prompt: "Would you date someone who counts macros?",
+    prompt: "Protein Bar falls on gym floor.",
     dimension: "COMMITMENT",
     options: [
-      { key: "A", label: "Yes.", weight: 88 },
-      { key: "B", label: "Maybe.", weight: 62 },
-      { key: "C", label: "No.", weight: 20 },
-      { key: "D", label: "I don't even know what macros are.", weight: 40 }
+      { key: "A", label: "Leave.", weight: 70 },
+      { key: "B", label: "Cry.", weight: 62 },
+      { key: "C", label: "Five-second.", weight: 48 },
+      { key: "D", label: "Gainslost.", weight: 84 }
     ]
   },
   {
     id: "protein-bar-5",
     foodSlug: "protein-bar",
-    prompt: "Protein Bar's biggest green flag?",
+    prompt: "Your jaw hurts halfway through.",
     dimension: "PRACTICAL LOVE",
     options: [
-      { key: "A", label: "Discipline.", weight: 86 },
-      { key: "B", label: "Convenience.", weight: 70 },
-      { key: "C", label: "Healthy lifestyle.", weight: 82 },
-      { key: "D", label: "It survives in my office drawer.", weight: 64 }
+      { key: "A", label: "Stop.", weight: 36 },
+      { key: "B", label: "Continue.", weight: 78 },
+      { key: "C", label: "Gains.", weight: 92 },
+      { key: "D", label: "Jawday.", weight: 86 }
     ]
   },
   {
