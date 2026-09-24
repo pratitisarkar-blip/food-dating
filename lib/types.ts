@@ -2,11 +2,11 @@ export const DEFAULT_EVENT_ID = "FOOD-DATING-001";
 
 export const PRIMARY_FOOD_SLUGS = [
   "samosa",
-  "brownie",
-  "protein-bar",
   "nacho-cheese",
   "gulab-jamun",
-  "tiramisu"
+  "brownie",
+  "tiramisu",
+  "protein-bar"
 ] as const;
 
 export type PrimaryFoodSlug = (typeof PRIMARY_FOOD_SLUGS)[number];

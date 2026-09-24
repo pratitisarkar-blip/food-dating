@@ -155,7 +155,9 @@ export default function ControllerPage() {
             </button>
           )}
           <button
-            className={`btn match-them-cta ${event.castRevealed ? "is-tapped" : ""}`}
+            className={`btn match-them-cta ${event.castRevealed ? "is-tapped" : ""} ${
+              booked === 6 && !event.castRevealed && !round ? "needs-press" : ""
+            }`}
             disabled={booked < 6 || Boolean(round) || event.castRevealed}
             onClick={() => act("reveal-matches")}
           >
@@ -167,6 +169,9 @@ export default function ControllerPage() {
         </div>
       </header>
 
+      {!event.castRevealed && booked === 6 && !round && (
+        <div className="dash-banner is-nudge">Press Match them. Call on Stage unlocks after that.</div>
+      )}
       {(error || confirm) && (
         <div className="dash-banner">
           {confirm ? `Tap the action again to confirm: ${confirm.replace("-", " ")}` : error}
@@ -179,7 +184,7 @@ export default function ControllerPage() {
           const person = event.participants.find((p) => p.id === pid);
           const used = event.usedFoodIds.includes(f.id);
           const live = round?.foodId === f.id;
-          const canCall = Boolean(person) && !used && !round;
+          const canCall = Boolean(person) && !used && !round && event.castRevealed;
           return (
             <div
               key={f.id}
@@ -212,7 +217,11 @@ export default function ControllerPage() {
       <div className="dash-body">
         <section className="dash-main">
           <p className="dash-hint">
-            Tap a heart to book that person against that food. When all six are booked, press Match them. Then Call on Stage for whoever should walk up.
+            {!event.castRevealed
+              ? booked < 6
+                ? "Tap a heart to book six dates. Then press Match them — Call on Stage stays locked until you do."
+                : "Press Match them now. Call on Stage stays locked until that button is tapped."
+              : "Match them is done. Press Call on Stage for whoever should walk up."}
           </p>
 
           <div className="dash-tools">
@@ -332,9 +341,15 @@ export default function ControllerPage() {
                 <b>1. Book the six dates</b>
                 <span>Tap a heart in the grid. Names appear on top.</span>
               </li>
-              <li>
+              <li className={booked >= 6 && !event.castRevealed ? "is-now" : booked >= 6 ? "is-done" : ""}>
                 <b>2. Match them</b>
-                <span>When all six slots are filled, press Match them. It turns green (Matched) and all six phones show It&apos;s a Match.</span>
+                <span>
+                  {event.castRevealed
+                    ? "Done. Matches are on stage and on the six phones."
+                    : booked < 6
+                      ? "When all six slots are filled, press Match them."
+                      : "Press Match them now. Call on Stage will not work until you do."}
+                </span>
               </li>
               <li>
                 <b>3. Call someone up</b>

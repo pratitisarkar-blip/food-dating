@@ -1,4 +1,4 @@
-import type { FoodProfile } from "./types";
+import { PRIMARY_FOOD_SLUGS, type FoodProfile } from "./types";
 
 export const FOODS: FoodProfile[] = [
   {
@@ -154,4 +154,8 @@ export const FOODS: FoodProfile[] = [
 ];
 
 export const FOOD_BY_ID = Object.fromEntries(FOODS.map((f) => [f.id, f]));
-export const PRIMARY_FOODS = FOODS.filter((f) => f.isPrimary);
+export const PRIMARY_FOODS = PRIMARY_FOOD_SLUGS.map((slug) => {
+  const food = FOODS.find((f) => f.id === slug);
+  if (!food) throw new Error(`Missing primary food: ${slug}`);
+  return food;
+});

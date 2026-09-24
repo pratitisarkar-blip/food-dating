@@ -413,6 +413,7 @@ function chooseFoodForVolunteer(event: EventState, participantId: string, foodSl
 export function selectVolunteer(event: EventState, participantId: string, foodSlug?: string) {
   const person = event.participants.find((p) => p.id === participantId);
   if (!person) throw new Error("Participant not found.");
+  if (!event.castRevealed) throw new Error("Press Match them first.");
   if (currentRound(event) && currentRound(event)!.status !== "complete") {
     throw new Error("End the current round first.");
   }

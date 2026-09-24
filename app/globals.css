@@ -885,6 +885,11 @@ table.matrix tbody tr.muted-row td.name {
   opacity: 0.35;
   cursor: default;
 }
+.controller .btn.match-them-cta.needs-press {
+  opacity: 1;
+  animation: match-them-pulse 1.1s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(255, 180, 74, 0.7);
+}
 .controller .btn.match-them-cta.is-tapped,
 .controller .btn.match-them-cta.is-tapped:disabled {
   opacity: 1;
@@ -892,6 +897,17 @@ table.matrix tbody tr.muted-row td.name {
   color: #7ef0b0;
   border-color: #2e6b4a;
   cursor: default;
+  animation: none;
+}
+@keyframes match-them-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 180, 74, 0.55); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(255, 180, 74, 0); }
+}
+.dash-banner.is-nudge {
+  background: #3a2a08;
+  color: #ffd56a;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 .btn.reset-cta {
   min-height: 52px;
