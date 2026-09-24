@@ -196,36 +196,36 @@ export const QUESTIONS: FoodQuestion[] = [
   {
     id: "nacho-cheese-2",
     foodSlug: "nacho-cheese",
-    prompt: "How much cheese is too much?",
-    dimension: "CHEESE LOYALTY",
+    prompt: "A nacho breaks inside the dip.",
+    dimension: "DIP DRAMA",
     options: [
-      { key: "A", label: "There is no such thing.", weight: 96 },
-      { key: "B", label: "Enough to be concerned.", weight: 34 },
-      { key: "C", label: "Depends.", weight: 58 },
-      { key: "D", label: "Is this a trick question?", weight: 80 }
+      { key: "A", label: "Rescue.", weight: 86 },
+      { key: "B", label: "Spoon.", weight: 78 },
+      { key: "C", label: "Sacrifice.", weight: 64 },
+      { key: "D", label: "Panic.", weight: 40 }
     ]
   },
   {
     id: "nacho-cheese-3",
     foodSlug: "nacho-cheese",
-    prompt: "Your date is extremely clingy.",
-    dimension: "CLING FACTOR",
+    prompt: "How much cheese with nachos is too much?",
+    dimension: "CHEESE LOYALTY",
     options: [
-      { key: "A", label: "Cute.", weight: 82 },
-      { key: "B", label: "Red flag.", weight: 18 },
-      { key: "C", label: "Depends on the cheese.", weight: 70 },
-      { key: "D", label: "That's literally why I'm here.", weight: 94 }
+      { key: "A", label: "There is no such thing.", weight: 96 },
+      { key: "B", label: "Enough to be concerned.", weight: 34 },
+      { key: "C", label: "Depends.", weight: 58 },
+      { key: "D", label: "I like it without cheese", weight: 16 }
     ]
   },
   {
     id: "nacho-cheese-4",
     foodSlug: "nacho-cheese",
-    prompt: "Ideal date?",
+    prompt: "What would be your ideal date?",
     dimension: "PARTY CHEMISTRY",
     options: [
       { key: "A", label: "Movie + nachos", weight: 86 },
-      { key: "B", label: "Party", weight: 78 },
-      { key: "C", label: "Netflix at home", weight: 72 },
+      { key: "B", label: "Party + nachos", weight: 78 },
+      { key: "C", label: "Netflix at home + nachos", weight: 72 },
       { key: "D", label: "Anything with extra dip", weight: 92 }
     ]
   },
@@ -244,19 +244,7 @@ export const QUESTIONS: FoodQuestion[] = [
   {
     id: "gulab-jamun-1",
     foodSlug: "gulab-jamun",
-    prompt: "Your date says they don't like Gulab Jamun.",
-    dimension: "FAMILY VALUES",
-    options: [
-      { key: "A", label: "We can work through this.", weight: 58 },
-      { key: "B", label: "Immediate breakup.", weight: 96 },
-      { key: "C", label: "I need time.", weight: 44 },
-      { key: "D", label: "Who hurt you?", weight: 80 }
-    ]
-  },
-  {
-    id: "gulab-jamun-2",
-    foodSlug: "gulab-jamun",
-    prompt: "Hot or cold?",
+    prompt: "You like it hot or cold?",
     dimension: "TEMPERATURE",
     options: [
       { key: "A", label: "Hot.", weight: 86 },
@@ -266,15 +254,27 @@ export const QUESTIONS: FoodQuestion[] = [
     ]
   },
   {
-    id: "gulab-jamun-3",
+    id: "gulab-jamun-2",
     foodSlug: "gulab-jamun",
-    prompt: "How many Gulab Jamuns on a first date?",
+    prompt: "You finish the Jamun. Syrup remains.",
     dimension: "APPETITE FOR LOVE",
     options: [
-      { key: "A", label: "One.", weight: 48 },
-      { key: "B", label: "Two.", weight: 72 },
-      { key: "C", label: "Unlimited.", weight: 92 },
-      { key: "D", label: "Depends who is paying.", weight: 64 }
+      { key: "A", label: "Leave it.", weight: 28 },
+      { key: "B", label: "Taste it.", weight: 64 },
+      { key: "C", label: "Finish it.", weight: 88 },
+      { key: "D", label: "Drink it like a shot.", weight: 96 }
+    ]
+  },
+  {
+    id: "gulab-jamun-3",
+    foodSlug: "gulab-jamun",
+    prompt: "You’re already full. Gulab Jamun arrives.",
+    dimension: "FAMILY VALUES",
+    options: [
+      { key: "A", label: "No, thank you.", weight: 18 },
+      { key: "B", label: "Just one.", weight: 62 },
+      { key: "C", label: "Tummy will adjust.", weight: 86 },
+      { key: "D", label: "Full? Who said I’m full?", weight: 96 }
     ]
   },
   {
@@ -292,13 +292,13 @@ export const QUESTIONS: FoodQuestion[] = [
   {
     id: "gulab-jamun-5",
     foodSlug: "gulab-jamun",
-    prompt: "Family introduction after how many dates?",
+    prompt: "Gulab Jamun disappears from the fridge.",
     dimension: "MUMMY APPROVAL",
     options: [
-      { key: "A", label: "First.", weight: 80 },
-      { key: "B", label: "Third.", weight: 74 },
-      { key: "C", label: "Six months.", weight: 42 },
-      { key: "D", label: "Mummy already knows.", weight: 94 }
+      { key: "A", label: "Ask who took it.", weight: 58 },
+      { key: "B", label: "Check the fridge again.", weight: 72 },
+      { key: "C", label: "Launch an investigation.", weight: 88 },
+      { key: "D", label: "File an FIR. This is personal.", weight: 96 }
     ]
   },
   {
