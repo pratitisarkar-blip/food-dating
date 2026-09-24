@@ -661,8 +661,8 @@ a { color: inherit; }
   border-radius: 32px;
   background-color: #f0e9df;
   background-repeat: no-repeat;
-  background-size: 116% auto;
-  background-position: center 6%;
+  background-size: cover;
+  background-position: center 18%;
   box-shadow: 0 18px 40px rgba(20, 10, 20, 0.14);
 }
 .stage-match-card {
@@ -1671,21 +1671,23 @@ details.more summary {
   overflow: hidden;
   background-color: #f0e9df;
   background-repeat: no-repeat;
-  /* Card art is taller than it is wide; pin to the top photo so the square is edge-to-edge food. */
-  background-size: 100% auto;
-  background-position: center top;
+  background-size: cover;
+  background-position: center 18%;
   box-shadow: 0 18px 40px rgba(20, 10, 20, 0.12);
 }
-.match-card--samosa { background-position: center 4%; background-size: 112% auto; }
-.match-card--brownie { background-position: center 6%; background-size: 118% auto; }
-.match-card--protein-bar { background-position: center 5%; background-size: 116% auto; }
-.match-card--nacho-cheese { background-position: center 8%; background-size: 120% auto; }
-.match-card--gulab-jamun { background-position: center 6%; background-size: 116% auto; }
-.match-card--tiramisu { background-position: center 5%; background-size: 116% auto; }
-.match-card--broccoli { background-position: center 6%; background-size: 116% auto; }
-.match-card--bhole-chature { background-position: center 8%; background-size: 118% auto; }
-.match-card--pizza { background-position: center 5%; background-size: 116% auto; }
-.match-card--sushi { background-position: center 6%; background-size: 116% auto; }
+.match-card--samosa,
+.match-card--brownie,
+.match-card--protein-bar,
+.match-card--nacho-cheese,
+.match-card--gulab-jamun,
+.match-card--tiramisu,
+.match-card--broccoli,
+.match-card--bhole-chature,
+.match-card--pizza,
+.match-card--sushi {
+  background-size: cover;
+  background-position: center 18%;
+}
 .match-heart {
   position: absolute;
   left: 50%;
