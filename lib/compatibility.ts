@@ -29,6 +29,28 @@ export function dimensionScores(foodSlug: string, answers: StageAnswer[]) {
   });
 }
 
+/** Three slam numbers that sit in the same band as Accept / Reject, not the raw answers. */
+export function teaseScores(overall: number, kind: ResultKind, seed = 0): number[] {
+  const reject = kind === "not-a-match" || overall <= 59;
+  const packs = reject
+    ? [
+        [8, -12, -4],
+        [11, -8, 1],
+        [6, -15, -2],
+        [13, -9, 3]
+      ]
+    : [
+        [-15, -8, -3],
+        [-12, -5, 1],
+        [-18, -9, -2],
+        [-11, -6, 2]
+      ];
+  const offsets = packs[Math.abs(seed) % packs.length];
+  const lo = reject ? 18 : 68;
+  const hi = reject ? 68 : 99;
+  return offsets.map((o) => Math.min(hi, Math.max(lo, overall + o)));
+}
+
 export function resultCopy(foodName: string, kind: ResultKind) {
   if (kind === "not-a-match") {
     const lines: Record<string, { title: string; sub: string }> = {

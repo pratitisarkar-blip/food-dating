@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import QRCode from "qrcode";
 import { getSocket } from "@/lib/useSocket";
 import type { FoodProfile, StageView } from "@/lib/types";
-import { bandForScore, dimensionScores, resultCopy } from "@/lib/compatibility";
+import { bandForScore, dimensionScores, resultCopy, teaseScores } from "@/lib/compatibility";
 import { playTone, unlockAudio } from "@/lib/sound";
 import { HeartbreakIcon } from "@/components/HeartbreakIcon";
 import { MatchIcon } from "@/components/MatchIcon";
@@ -383,17 +383,13 @@ function Reveal({
   const copy = resultCopy(foodName, kind);
   const counting = step >= 5;
   const { value, locked } = useCountUp(score, counting);
-  const dims = useMemo(
-    () =>
-      round?.foodId
-        ? dimensionScores(round.foodId, round.answers).slice(0, 3)
-        : [
-            { label: "CHUTNEY COMPATIBILITY", value: 42 },
-            { label: "PERSONALITY", value: 31 },
-            { label: "CRUNCH COMPATIBILITY", value: 38 }
-          ],
-    [round]
-  );
+  const dims = useMemo(() => {
+    const labels = round?.foodId
+      ? dimensionScores(round.foodId, round.answers).slice(0, 3).map((d) => d.label)
+      : ["CHUTNEY COMPATIBILITY", "PERSONALITY", "CRUNCH COMPATIBILITY"];
+    const values = teaseScores(score, kind, round?.volunteerIndex ?? 0);
+    return labels.map((label, i) => ({ label, value: values[i] ?? score }));
+  }, [round, score, kind]);
 
   useEffect(() => {
     if (!audioOn) return;
